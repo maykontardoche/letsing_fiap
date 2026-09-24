@@ -68,6 +68,44 @@ services:
       timeout: 3s
       retries: 12
 
+  # ---- Pilha completa em containers (opcional) --------------------------------
+  #   npm run gerar-chave -w apps/api -- --existente   → copie a linha para o .env da raiz
+  #   docker compose --profile app up --build
+  #   → SPA em http://localhost:8080 (a API responde em /api, pela mesma origem)
+  #
+  # ⚠️ Usa o MESMO banco, o MESMO disco (apps/api/storage) e — com `--existente` — a
+  # MESMA chave Ed25519 do desenvolvimento: os documentos do seed continuam
+  # verificáveis. Com uma chave nova, as assinaturas antigas passariam a ser
+  # "inválidas", que é exatamente o que uma troca de chave sem rotação causa.
+  api:
+    profiles: ['app']
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    container_name: letssign-api
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      mailpit: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      PORT: 3020
+      DATABASE_URL: postgresql://letssign:letssign@postgres:5432/letssign
+      REDIS_URL: redis://redis:6379
+      SMTP_URL: smtp://mailpit:1025
+      APP_URL: http://localhost:8080
+      CORS_ORIGINS: http://localhost:8080
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-6c6574737369676e2d6465762d6b65792d6e616f2d7573652d656d2d70726f64}
+      CHAVE_PRIVADA_ED25519: ${CHAVE_PRIVADA_ED25519:?defina CHAVE_PRIVADA_ED25519 no .env da raiz (npm run gerar-chave -w apps/api)}
+    volumes:
+      - ./apps/api/storage:/repo/apps/api/storage
+
+  web:
+    profiles: ['app']
+    build: { context: ., dockerfile: apps/web/Dockerfile }
+    container_name: letssign-web
+    depends_on: [api]
+    ports:
+      - '${WEB_PORT:-8080}:80'
+
 volumes:
   letssign-postgres:
     name: letssign-postgres

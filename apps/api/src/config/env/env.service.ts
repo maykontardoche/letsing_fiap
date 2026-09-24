@@ -43,6 +43,18 @@ export class EnvService {
     return this.ler('APP_URL').replace(/\/+$/, '');
   }
 
+  /**
+   * Cookie de sessão com `Secure` quando o SPA é servido por HTTPS.
+   *
+   * ⚠️ Decidido pelo esquema do `APP_URL`, não pelo `NODE_ENV`: uma instalação de
+   * produção atrás de HTTP puro (rede interna, demonstração em container) com
+   * `Secure` ligado nunca receberia o cookie de volta — o login "funcionaria" e
+   * toda requisição seguinte voltaria 401.
+   */
+  get cookieSeguro(): boolean {
+    return this.urlDoApp.startsWith('https://');
+  }
+
   get smtpUrl(): string | undefined {
     return this.ler('SMTP_URL');
   }

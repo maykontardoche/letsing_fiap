@@ -31,6 +31,10 @@ export default defineConfig({
     chunkSizeWarningLimit: 1600,
   },
   optimizeDeps: {
+    // ⚠️ Pré-otimizadas de antemão: sem isto, o Vite as descobriria no primeiro
+    // `import()` dinâmico e RECARREGARIA a página — no meio da verificação facial.
+    include: ['@vladmandic/face-api', 'react-pdf', 'chart.js', 'react-chartjs-2'],
+    // O MediaPipe carrega WebAssembly próprio e não pode ser reempacotado.
     exclude: ['@mediapipe/tasks-vision'],
   },
 });

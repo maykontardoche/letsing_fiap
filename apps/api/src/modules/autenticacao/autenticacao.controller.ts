@@ -33,7 +33,7 @@ export class AutenticacaoController {
   ): Promise<{ precisaMfa: boolean }> {
     const { idDaSessao, precisaMfa } = await this.servico.cadastrar(dto, origem);
 
-    gravarCookieDeSessao(resposta, idDaSessao, this.env.emProducao);
+    gravarCookieDeSessao(resposta, idDaSessao, this.env.cookieSeguro);
 
     return { precisaMfa };
   }
@@ -48,7 +48,7 @@ export class AutenticacaoController {
   ): Promise<{ precisaMfa: boolean }> {
     const { idDaSessao, precisaMfa } = await this.servico.entrar(dto.email, dto.senha, origem);
 
-    gravarCookieDeSessao(resposta, idDaSessao, this.env.emProducao);
+    gravarCookieDeSessao(resposta, idDaSessao, this.env.cookieSeguro);
 
     return { precisaMfa };
   }
@@ -79,7 +79,7 @@ export class AutenticacaoController {
   ): Promise<void> {
     if (requisicao.idDaSessao !== undefined) await this.servico.sair(requisicao.idDaSessao);
 
-    apagarCookieDeSessao(resposta, this.env.emProducao);
+    apagarCookieDeSessao(resposta, this.env.cookieSeguro);
   }
 
   @Publico()

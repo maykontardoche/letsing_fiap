@@ -18,7 +18,10 @@ const MODULOS = [
 ];
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'storage/**', '*.config.mjs', '*.config.js'] },
+  {
+    // `scripts/` são utilitários de linha de comando em JS puro, fora do tsconfig.
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'storage/**', 'storage-de-teste/**', 'scripts/**', '*.config.mjs', '*.config.js'],
+  },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   eslintPluginPrettierRecommended,

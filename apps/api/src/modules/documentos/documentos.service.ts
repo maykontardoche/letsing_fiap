@@ -240,6 +240,16 @@ export class DocumentosService {
       throw new BadRequestException('Há e-mails repetidos entre os signatários.');
 
     const chave = chaveDeCifra(this.env.chaveDeCifra);
+    // ⚠️ A API só devolve o CPF mascarado, então reeditar a lista chega sem ele. Para o
+    // mesmo e-mail, sem CPF novo, o já cifrado é mantido — senão salvar de novo o apagaria.
+    const anteriores = new Map(
+      (
+        await this.prisma.db.signatario.findMany({
+          where: { documentoId: documento.id },
+          select: { email: true, cpfCifrado: true, cpfFinal: true },
+        })
+      ).map((s) => [s.email, s]),
+    );
     const linhas = lista.map((s, indice) => {
       const cpf = s.cpf ? apenasDigitos(s.cpf) : null;
 
@@ -247,14 +257,16 @@ export class DocumentosService {
         throw new BadRequestException(`O CPF de ${s.nome} é inválido.`);
       }
 
+      const anterior = cpf ? undefined : anteriores.get(s.email);
+
       return {
         organizacaoId: usuario.organizacaoId,
         documentoId: documento.id,
         nome: s.nome,
         email: s.email,
         ordem: indice + 1,
-        cpfCifrado: cpf ? cifrar(cpf, chave) : null,
-        cpfFinal: cpf ? cpf.slice(-2) : null,
+        cpfCifrado: cpf ? cifrar(cpf, chave) : (anterior?.cpfCifrado ?? null),
+        cpfFinal: cpf ? cpf.slice(-2) : (anterior?.cpfFinal ?? null),
       };
     });
 
