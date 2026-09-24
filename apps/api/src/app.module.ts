@@ -33,9 +33,12 @@ import { ValidacaoModule } from './modules/validacao/validacao.module';
     ScheduleModule.forRoot(),
     ThrottlerModule.forRootAsync({
       inject: [EnvService],
-      useFactory: (env: EnvService) => [
-        { ttl: env.throttleTtlSegundos * 1000, limit: env.throttleLimite },
-      ],
+      useFactory: (env: EnvService) => ({
+        throttlers: [{ ttl: env.throttleTtlSegundos * 1000, limit: env.throttleLimite }],
+        // Os testes de integração fazem dezenas de logins do mesmo IP. O limite
+        // por e-mail+IP do login (Redis) continua ativo e é testado à parte.
+        skipIf: () => env.ambiente === 'test',
+      }),
     }),
     AutenticacaoModule,
     MeModule,

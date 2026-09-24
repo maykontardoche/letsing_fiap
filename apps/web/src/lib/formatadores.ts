@@ -34,10 +34,16 @@ function paraData(valor: Entrada): Date | null {
 }
 
 /** ⚠️ `null` vira travessão, nunca uma data inventada. */
+/** `01 mar 2026` — montado pelas partes, não por substituição de texto: o formato
+ * de `Intl` varia entre navegadores ("01 de mar. de 2026" num, "01 mar 2026" noutro). */
 export function formatarData(valor: Entrada): string {
   const data = paraData(valor);
 
-  return data === null ? '—' : dataCurta.format(data).replace(' de ', ' ').replace('.', '');
+  if (data === null) return '—';
+
+  const partes = Object.fromEntries(dataCurta.formatToParts(data).map((p) => [p.type, p.value]));
+
+  return `${partes.day} ${(partes.month ?? '').replace('.', '')} ${partes.year}`;
 }
 
 export function formatarDataHora(valor: Entrada): string {

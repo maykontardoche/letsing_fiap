@@ -19,3 +19,4 @@ apps/api/storage/
 Thumbs.db
 *.log
 npm-debug.log*
+apps/api/storage-de-teste/
