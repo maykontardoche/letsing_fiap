@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CODIGO_MFA, ErroDaApi, mensagemDoErro, traduzirErro } from './erros';
 import {
+  contar,
   formatarBytes,
   formatarData,
   formatarDuracao,
@@ -108,5 +109,13 @@ describe('formatadores pt-BR', () => {
     expect(saudacao(new Date('2026-09-24T12:00:00Z'))).toBe('Bom dia');
     expect(saudacao(new Date('2026-09-24T18:00:00Z'))).toBe('Boa tarde');
     expect(saudacao(new Date('2026-09-24T23:30:00Z'))).toBe('Boa noite');
+  });
+});
+
+describe('contar', () => {
+  it('concorda o substantivo com a quantidade', () => {
+    expect(contar(1, 'pessoa ativa', 'pessoas ativas')).toBe('1 pessoa ativa');
+    expect(contar(0, 'pessoa ativa', 'pessoas ativas')).toBe('0 pessoas ativas');
+    expect(contar(4, 'cadeia', 'cadeias')).toBe('4 cadeias');
   });
 });

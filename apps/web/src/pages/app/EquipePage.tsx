@@ -24,7 +24,7 @@ import { Modal } from '@/components/ui/Modal';
 import { apiDaEquipe, type Membro } from '@/lib/api/gestao';
 import { ROTULO_DO_PAPEL, type Papel } from '@/lib/api/sessao';
 import { mensagemDoErro } from '@/lib/erros';
-import { formatarRelativo } from '@/lib/formatadores';
+import { contar, formatarRelativo } from '@/lib/formatadores';
 
 const DESCRICAO_DO_PAPEL: Record<Papel, string> = {
   proprietario: 'Tudo, inclusive plano e dados da organização.',
@@ -133,7 +133,7 @@ export function EquipePage() {
         {consulta.data && consulta.data.length > 0 && (
           <>
             <p className="border-linha text-tinta-3 border-b px-5 py-3 text-sm">
-              {ativos} pessoa(s) ativa(s)
+              {contar(ativos, 'pessoa ativa', 'pessoas ativas')}
             </p>
             <ul className="divide-linha divide-y">
               {consulta.data.map((membro) => {

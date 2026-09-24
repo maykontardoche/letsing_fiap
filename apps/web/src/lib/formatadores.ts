@@ -98,6 +98,11 @@ export function formatarDuracao(horas: number | null): string {
   return `${Math.round(horas / 24)} dias`;
 }
 
+/** `contar(1, 'pessoa ativa', 'pessoas ativas')` → `1 pessoa ativa`. Nunca "(s)". */
+export function contar(quantidade: number, singular: string, plural: string): string {
+  return `${quantidade} ${quantidade === 1 ? singular : plural}`;
+}
+
 export function formatarPorcentagem(valor: number | null): string {
   return valor === null ? '—' : `${Math.round(valor * 100)}%`;
 }

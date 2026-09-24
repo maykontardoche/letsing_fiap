@@ -21,6 +21,7 @@ import { gerarCodigoDeDocumento, sha256 } from '../../common/cripto/hash';
 import { LIMITES_DO_PLANO, ROTULO_DO_PLANO, inicioDoMes } from '../../common/planos';
 import { comOrganizacaoDoContexto } from '../../common/tenancy/dados-escopados';
 import { apenasDigitos, cpfValido } from '../../common/texto/mascaras';
+import { contar, resumoDoEnvio } from '../../common/texto/plural';
 import { detalheDoDocumento, resumoDoDocumento } from './apresentacao';
 import type { AtualizarDocumentoDto, ListarDocumentosDto, SignatarioDto } from './documentos.dto';
 
@@ -276,7 +277,7 @@ export class DocumentosService {
       await this.auditoria.registrar(
         {
           acao: 'signatarios_definidos',
-          resumo: `${usuario.nome} definiu ${lista.length} signatário${lista.length > 1 ? 's' : ''}: ${lista.map((s) => s.nome).join(', ')}.`,
+          resumo: `${usuario.nome} definiu ${contar(lista.length, 'signatário', 'signatários')}: ${lista.map((s) => s.nome).join(', ')}.`,
           tipoAtor: 'usuario',
           atorId: usuario.id,
           atorNome: usuario.nome,
@@ -322,7 +323,7 @@ export class DocumentosService {
       await this.auditoria.registrar(
         {
           acao: 'documento_enviado',
-          resumo: `${usuario.nome} enviou o documento para assinatura (${signatarios.length} signatário${signatarios.length > 1 ? 's' : ''}, ${documento.ordemSequencial ? 'em ordem' : 'em paralelo'}).`,
+          resumo: resumoDoEnvio(usuario.nome, signatarios.length, documento.ordemSequencial),
           tipoAtor: 'usuario',
           atorId: usuario.id,
           atorNome: usuario.nome,

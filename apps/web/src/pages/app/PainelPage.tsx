@@ -123,7 +123,7 @@ function ConteudoDoPainel({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 *:min-w-0 sm:grid-cols-2 xl:grid-cols-4">
         <Indicador
           indice={0}
           icone={<Clock3 />}
@@ -158,7 +158,7 @@ function ConteudoDoPainel({
         />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-3">
+      <div className="grid gap-6 *:min-w-0 xl:grid-cols-3">
         <Cartao className="xl:col-span-2">
           <CabecalhoDoCartao
             titulo="Assinaturas nos últimos 12 meses"
@@ -204,7 +204,7 @@ function ConteudoDoPainel({
         </Cartao>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid items-start gap-6 *:min-w-0 lg:grid-cols-2">
         <Cartao>
           <CabecalhoDoCartao
             titulo="Aguardando sua assinatura"
@@ -389,12 +389,12 @@ function EsqueletoDoPainel() {
   return (
     <Carregando rotulo="Carregando o painel…">
       <div className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 *:min-w-0 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }, (_, i) => (
             <Esqueleto key={i} className="h-40 rounded-[var(--radius-cartao)]" />
           ))}
         </div>
-        <div className="grid gap-6 xl:grid-cols-3">
+        <div className="grid gap-6 *:min-w-0 xl:grid-cols-3">
           <Esqueleto className="h-96 rounded-[var(--radius-cartao)] xl:col-span-2" />
           <Esqueleto className="h-96 rounded-[var(--radius-cartao)]" />
         </div>

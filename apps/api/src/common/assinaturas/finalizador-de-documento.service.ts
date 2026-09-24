@@ -10,6 +10,7 @@ import { EmailService } from '../email/email.service';
 import { modelos } from '../email/modelos';
 import { NotificacoesService } from '../notificacoes/notificacoes.service';
 import { mascararCpf, mascararEmail } from '../texto/mascaras';
+import { resumoDaConclusao } from '../texto/plural';
 import { montarPdfAssinado } from './pdf-assinado';
 import { ROTULO_DA_VERIFICACAO } from './status-do-documento';
 
@@ -170,7 +171,7 @@ export class FinalizadorDeDocumentoService {
       await this.auditoria.registrar(
         {
           acao: 'documento_concluido',
-          resumo: `Todas as ${documento.signatarios.length} assinaturas coletadas. PDF final gerado e selado pela plataforma.`,
+          resumo: resumoDaConclusao(documento.signatarios.length),
           tipoAtor: 'sistema',
           atorNome: 'LetsSign',
           documento: { id: documento.id, uuid: documento.uuid },

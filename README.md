@@ -11,7 +11,7 @@
 ![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)
 ![Prisma](https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma&logoColor=white)
 ![Tailwind](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
-![Testes](https://img.shields.io/badge/testes-145%20passando-10b981)
+![Testes](https://img.shields.io/badge/testes-147%20passando-10b981)
 
 Projeto acadêmico — **FIAP**
 
@@ -160,7 +160,7 @@ tasks/                 artefatos de spec (PRD → techspec → tasks)
 npm run verificar    # lint + typecheck + testes, nos dois apps
 ```
 
-- **145 testes automatizados** — 99 na API (unidade e integração contra Postgres/Redis reais) e 46 no SPA.
+- **147 testes automatizados** — 100 na API (unidade e integração contra Postgres/Redis reais) e 47 no SPA.
 - **Gates que a suíte impõe:** isolamento entre organizações em todas as rotas; todo model com
   `organizacaoId` coberto pelo escopo automático; adulteração da trilha detectada; contraste WCAG AA
   calculado a partir dos tokens de cor; limites de plano e política de senha idênticos no front e no servidor.

@@ -257,7 +257,7 @@ function veredito(dados: ResultadoDaValidacao): Veredito {
       tom: 'sucesso',
       icone: <BadgeCheck />,
       titulo: 'Documento autêntico e íntegro',
-      texto: `Assinado por todos os ${dados.signatarios.length} signatários. Assinaturas, selo da plataforma e trilha de auditoria verificados agora.`,
+      texto: `${dados.signatarios.length === 1 ? 'Assinado pelo signatário' : `Assinado por todos os ${dados.signatarios.length} signatários`}. Assinaturas, selo da plataforma e trilha de auditoria verificados agora.`,
     };
   }
 
@@ -435,7 +435,7 @@ function Laudo({
                 )}
                 icone={<FileCheck2 />}
                 titulo="Assinaturas dos signatários"
-                texto={`${dados.signatarios.filter((s) => s.assinaturaDigital?.valida).length} de ${dados.signatarios.length} válidas`}
+                texto={`${dados.signatarios.filter((s) => s.assinaturaDigital?.valida).length} de ${dados.signatarios.length} ${dados.signatarios.length === 1 ? 'válida' : 'válidas'}`}
               />
               <Prova
                 ok={trilha.integra}

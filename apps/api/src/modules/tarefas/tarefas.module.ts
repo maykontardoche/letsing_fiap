@@ -5,6 +5,7 @@ import { EnvService } from '../../config/env/env.service';
 import { FinalizadorDeDocumentoService } from '../../common/assinaturas/finalizador-de-documento.service';
 import { AuditoriaService } from '../../common/auditoria/auditoria.service';
 import { executarNoContexto, semEscopoDeOrganizacao } from '../../common/tenancy/tenant-context';
+import { contar } from '../../common/texto/plural';
 
 /**
  * Jobs agendados.
@@ -72,7 +73,8 @@ export class TarefasService {
       );
     }
 
-    if (vencidos.length > 0) this.logger.log(`${vencidos.length} documento(s) expirado(s).`);
+    if (vencidos.length > 0)
+      this.logger.log(`${contar(vencidos.length, 'documento expirado', 'documentos expirados')}.`);
 
     return vencidos.length;
   }

@@ -14,7 +14,7 @@
 | **E4 — Assinatura** | Fluxo sem conta pelo link; desafios sorteados no servidor (código, rosto, voz, gestos); assinatura Ed25519; recusa; conclusão idempotente com PDF final, manifesto, QR e evidências | `modules/assinatura`, `common/assinaturas`, `pages/assinar` |
 | **E5 — Auditoria e validação** | Trilha append-only encadeada por hash, exame de integridade, exportação CSV; validação pública por código ou hash | `common/auditoria`, `modules/validacao`, `pages/publico/ValidarPage` |
 | **E6 — Gestão** | Painel com indicadores e gráficos, equipe e papéis, organização e plano, notificações, sessões ativas | `modules/{painel,equipe,organizacao}` |
-| **E7 — Qualidade** | 145 testes (99 API, 46 SPA), gates de isolamento, de escopo e de contraste | `apps/api/test`, `apps/web/src/test` |
+| **E7 — Qualidade** | 147 testes (100 API, 47 SPA), gates de isolamento, de escopo e de contraste | `apps/api/test`, `apps/web/src/test` |
 | **E8 — Documentação** | README, arquitetura, segurança, contrato da API, design system, ADRs, harness `.claude` | `docs/`, `.claude/` |
 
 ## Próximos passos (backlog)

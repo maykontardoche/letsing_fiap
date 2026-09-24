@@ -10,6 +10,20 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
+/**
+ * Glifos desenhados como caminhos vetoriais, com as fontes-padrão servidas pelo
+ * próprio SPA (plugin em `vite.config.ts`).
+ *
+ * ⚠️ O react-pdf cria o canvas opaco (`alpha: false`); nele, o `fillText` do Chromium
+ * usa antisserrilhado subpixel e o texto sai com franjas vermelhas. `disableFontFace`
+ * troca o `fillText` por caminhos — tons de cinza, fiel ao PDF.
+ * ⚠️ Fora do componente: o react-pdf recarrega o documento se `options` mudar de identidade.
+ */
+const OPCOES_DO_PDF = {
+  standardFontDataUrl: '/pdfjs/standard_fonts/',
+  disableFontFace: true,
+} as const;
+
 interface Props {
   /** URL da API (mesma origem via proxy — o cookie de sessão vai junto) ou `File` local. */
   readonly arquivo: string | File;
@@ -155,6 +169,7 @@ export function VisualizadorDePdf({ arquivo, className, alturaMaxima = '75dvh' }
       >
         <Document
           file={arquivo}
+          options={OPCOES_DO_PDF}
           onLoadSuccess={({ numPages }) => definirPaginas(numPages)}
           onLoadError={() => definirFalhou(true)}
           loading={<Esqueleto className="mx-auto aspect-[1/1.414] w-full max-w-2xl rounded-lg" />}

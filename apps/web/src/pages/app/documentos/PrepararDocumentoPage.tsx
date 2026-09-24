@@ -500,7 +500,7 @@ function EtapaRevisao({
   const aoEnviar = async () => {
     const ok = await confirmar({
       titulo: 'Enviar para assinatura?',
-      mensagem: `${documento.signatarios.length} pessoa(s) vão receber o convite por e-mail. Depois do envio o documento não pode mais ser alterado — só cancelado.`,
+      mensagem: `${documento.signatarios.length === 1 ? '1 pessoa vai' : `${documento.signatarios.length} pessoas vão`} receber o convite por e-mail. Depois do envio o documento não pode mais ser alterado — só cancelado.`,
       confirmar: 'Enviar agora',
     });
 

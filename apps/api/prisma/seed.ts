@@ -19,6 +19,7 @@ import { gerarHashDeSenha } from '../src/common/cripto/senha';
 import { executarNoContexto } from '../src/common/tenancy/tenant-context';
 import { criarExtensaoDeOrganizacao } from '../src/common/tenancy/tenant-extension';
 import { mascararCpf, mascararEmail } from '../src/common/texto/mascaras';
+import { contar, resumoDaConclusao, resumoDoEnvio } from '../src/common/texto/plural';
 import type { EnvService } from '../src/config/env/env.service';
 import type { PrismaService } from '../src/config/database/prisma.service';
 import { gerarContrato } from './seed/contrato';
@@ -330,7 +331,7 @@ async function simular(
   await auditoria.registrar({
     ...ator,
     acao: 'signatarios_definidos',
-    resumo: `${criador.nome} definiu ${signatarios.length} signatário(s): ${signatarios.map((s) => s.nome).join(', ')}.`,
+    resumo: `${criador.nome} definiu ${contar(signatarios.length, 'signatário', 'signatários')}: ${signatarios.map((s) => s.nome).join(', ')}.`,
     documento: ref,
     em: new Date(criacao.getTime() + 5 * MINUTO),
   });
@@ -344,7 +345,7 @@ async function simular(
   await auditoria.registrar({
     ...ator,
     acao: 'documento_enviado',
-    resumo: `${criador.nome} enviou o documento para assinatura (${signatarios.length} signatário(s), ${cenario.sequencial ? 'em ordem' : 'em paralelo'}).`,
+    resumo: resumoDoEnvio(criador.nome, signatarios.length, cenario.sequencial ?? false),
     documento: ref,
     em: envio,
   });
@@ -656,7 +657,7 @@ async function concluir(
     tipoAtor: 'sistema',
     atorNome: 'LetsSign',
     acao: 'documento_concluido',
-    resumo: `Todas as ${documento.signatarios.length} assinaturas coletadas. PDF final gerado e selado pela plataforma.`,
+    resumo: resumoDaConclusao(documento.signatarios.length),
     documento: { id: documento.id, uuid: documento.uuid },
     dados: { hashAssinado, idDaChave: assinador.idDaChave },
     em: agora,

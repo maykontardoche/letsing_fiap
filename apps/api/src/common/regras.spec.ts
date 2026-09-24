@@ -10,6 +10,7 @@ import {
 import { PERMISSOES, pode } from './auth/permissoes';
 import { normalizarIp } from './auth/requisicao';
 import { LIMITES_DO_PLANO, inicioDoMes } from './planos';
+import { contar, resumoDaConclusao, resumoDoEnvio } from './texto/plural';
 import { abreviarNome, cpfValido, mascararCpf, mascararEmail, normalizar } from './texto/mascaras';
 import { CENSURA, redigirProfundo } from '../config/logger/redaction';
 
@@ -179,5 +180,20 @@ describe('PDF final', () => {
     expect(final.getPageCount()).toBeGreaterThanOrEqual(4);
     expect(final.getTitle()).toBe('Contrato ? de teste');
     expect(Buffer.from(bytes).toString('latin1')).toContain('letssign-evidencias.json');
+  });
+});
+
+describe('plural dos resumos da trilha', () => {
+  it('nunca grava "(s)": singular e plural explícitos', () => {
+    expect(contar(1, 'signatário', 'signatários')).toBe('1 signatário');
+    expect(contar(3, 'signatário', 'signatários')).toBe('3 signatários');
+    expect(resumoDaConclusao(1)).toMatch(/^A assinatura foi coletada\./);
+    expect(resumoDaConclusao(2)).toMatch(/^Todas as 2 assinaturas foram coletadas\./);
+    expect(resumoDoEnvio('Ana', 1, false)).toBe(
+      'Ana enviou o documento para assinatura (1 signatário).',
+    );
+    expect(resumoDoEnvio('Ana', 3, true)).toBe(
+      'Ana enviou o documento para assinatura (3 signatários, em ordem).',
+    );
   });
 });

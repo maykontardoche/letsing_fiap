@@ -20,7 +20,7 @@ import { Paginacao } from '@/components/ui/Diversos';
 import { Alerta, Carregando, EstadoDeErro, EstadoVazio, Esqueleto } from '@/components/ui/Estados';
 import { apiDeAuditoria, type EventoDeAuditoria } from '@/lib/api/gestao';
 import { cn } from '@/lib/cn';
-import { formatarDataHora, formatarRelativo } from '@/lib/formatadores';
+import { contar, formatarDataHora, formatarRelativo } from '@/lib/formatadores';
 
 const ATORES = {
   usuario: { rotulo: 'Usuário', icone: User, classe: 'bg-destaque-suave text-destaque-tinta' },
@@ -32,8 +32,45 @@ const ATORES = {
   sistema: { rotulo: 'Sistema', icone: Bot, classe: 'bg-neutro-suave text-neutro-tinta' },
 } as const;
 
-/** `documento_enviado` → "Documento enviado". */
+/** Rótulo de cada ação gravada pela API — com acento, que o identificador não tem. */
+const ROTULO_DA_ACAO: Readonly<Record<string, string>> = {
+  assinatura_recusada: 'Assinatura recusada',
+  assinatura_registrada: 'Assinatura registrada',
+  convite_enviado: 'Convite enviado',
+  convite_reenviado: 'Convite reenviado',
+  documento_cancelado: 'Documento cancelado',
+  documento_concluido: 'Documento concluído',
+  documento_configurado: 'Documento configurado',
+  documento_criado: 'Documento criado',
+  documento_enviado: 'Documento enviado',
+  documento_expirado: 'Documento expirado',
+  documento_visualizado: 'Documento visualizado',
+  login: 'Login',
+  login_falhou: 'Login recusado',
+  membro_convidado: 'Membro convidado',
+  membro_desativado: 'Membro desativado',
+  membro_reativado: 'Membro reativado',
+  mfa_ativado: 'Verificação em duas etapas ativada',
+  mfa_desativado: 'Verificação em duas etapas desativada',
+  organizacao_atualizada: 'Organização atualizada',
+  organizacao_criada: 'Organização criada',
+  papel_alterado: 'Papel alterado',
+  perfil_atualizado: 'Perfil atualizado',
+  rascunho_excluido: 'Rascunho excluído',
+  senha_alterada: 'Senha alterada',
+  senha_redefinida: 'Senha redefinida',
+  sessao_revogada: 'Sessão encerrada',
+  signatarios_definidos: 'Signatários definidos',
+  verificacao_aprovada: 'Verificação aprovada',
+  verificacao_reprovada: 'Verificação reprovada',
+};
+
+/** Ação desconhecida (API mais nova que o SPA) cai no identificador legível: `x_y` → "X y". */
 function rotuloDaAcao(acao: string): string {
+  const conhecido = ROTULO_DA_ACAO[acao];
+
+  if (conhecido) return conhecido;
+
   const texto = acao.replace(/_/g, ' ');
 
   return texto.charAt(0).toUpperCase() + texto.slice(1);
@@ -95,7 +132,7 @@ export function AuditoriaPage() {
         ) : (
           <Alerta
             tom="perigo"
-            titulo={`${exame.data.quebradas.length} cadeia(s) com quebra`}
+            titulo={`${contar(exame.data.quebradas.length, 'cadeia', 'cadeias')} com quebra`}
             className="mb-6"
           >
             <ul className="list-disc pl-5">
