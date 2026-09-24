@@ -1,0 +1,402 @@
+// Schema da API do LetsSign.
+//
+// ⚠️ MULTI-TENANCY. Toda tabela de negócio tem `organizacao_id`. O filtro NÃO é
+// responsabilidade de quem escreve a query: é injetado pela extensão do Prisma
+// Client em `src/common/tenancy/`. A lista de models escopados é EXPLÍCITA, em
+// `src/common/tenancy/models-escopados.ts` — um model novo de negócio que não
+// entrar lá é um vazamento de dados entre organizações esperando para acontecer.
+//
+// ⚠️ ESCRITAS ANINHADAS (`create: { signatarios: { create: [...] } }`) NÃO passam
+// pela extensão: o Prisma só intercepta a operação de topo. Toda escrita aninhada
+// informa `organizacaoId` explicitamente.
+//
+// Convenções:
+//   - nomes de domínio em português, colunas em snake_case (`@map`);
+//   - `uuid` público além do `id` interno nas entidades expostas por URL — o `id`
+//     sequencial nunca sai da API, porque ele revela volume e é enumerável;
+//   - enums nativos do Postgres onde o conjunto é fechado;
+//   - dados sensíveis (CPF, segredo de MFA) CIFRADOS em repouso (AES-256-GCM).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// A URL de conexão vive no `prisma.config.ts` (Prisma 7).
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+/// O papel de um usuário dentro da organização. As permissões de cada papel
+/// vivem em código (`src/common/auth/permissoes.ts`), não no banco: são poucas,
+/// estáveis, e versioná-las junto do código que as verifica evita drift.
+enum Papel {
+  proprietario
+  administrador
+  membro
+  auditor
+
+  @@map("papel")
+}
+
+/// O plano contratado. Limita envios por mês — ver `common/planos.ts`.
+enum Plano {
+  basico
+  profissional
+  empresarial
+
+  @@map("plano")
+}
+
+/// O ciclo de vida de um documento (envelope).
+///
+/// ⚠️ Não é sequência livre: as transições permitidas vivem em
+/// `common/assinaturas/status-do-documento.ts`, e transição fora da tabela é 422.
+enum StatusDoDocumento {
+  rascunho
+  em_andamento
+  concluido
+  cancelado
+  recusado
+  expirado
+
+  @@map("status_do_documento")
+}
+
+enum StatusDoSignatario {
+  pendente
+  visualizado
+  assinado
+  recusado
+
+  @@map("status_do_signatario")
+}
+
+/// Quanta prova de identidade o documento exige de cada signatário.
+///
+/// - `simples`    → código de uso único enviado ao e-mail
+/// - `biometrico` → e-mail + reconhecimento facial com prova de vida
+/// - `completo`   → e-mail + facial + desafio de voz + sequência de gestos
+enum NivelDeVerificacao {
+  simples
+  biometrico
+  completo
+
+  @@map("nivel_de_verificacao")
+}
+
+enum TipoDeVerificacao {
+  codigo_email
+  facial
+  voz
+  gestos
+
+  @@map("tipo_de_verificacao")
+}
+
+enum TipoDeAssinatura {
+  desenhada
+  digitada
+
+  @@map("tipo_de_assinatura")
+}
+
+/// Quem praticou uma ação registrada na trilha de auditoria.
+enum TipoDeAtor {
+  usuario
+  signatario
+  sistema
+
+  @@map("tipo_de_ator")
+}
+
+// ---------------------------------------------------------------------------
+// Organização (tenant) e pessoas
+// ---------------------------------------------------------------------------
+
+/// A empresa-cliente. É o tenant: nada de uma organização é visível a outra.
+model Organizacao {
+  id           Int      @id @default(autoincrement())
+  uuid         String   @unique @default(uuid()) @db.Uuid
+  nome         String   @db.VarChar(120)
+  slug         String   @unique @db.VarChar(140)
+  plano        Plano    @default(basico)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+
+  usuarios     Usuario[]
+  documentos   Documento[]
+  signatarios  Signatario[]
+  desafios     DesafioDeVerificacao[]
+  eventos      EventoDeAuditoria[]
+  sessoes      Sessao[]
+  notificacoes Notificacao[]
+
+  @@map("organizacoes")
+}
+
+model Usuario {
+  id            Int       @id @default(autoincrement())
+  uuid          String    @unique @default(uuid()) @db.Uuid
+  organizacaoId Int       @map("organizacao_id")
+  nome          String    @db.VarChar(120)
+  /// Único na plataforma inteira: é a chave do login, que acontece ANTES de se
+  /// saber a organização.
+  email         String    @unique @db.VarChar(180)
+  /// `null` enquanto o convite não foi aceito (a pessoa ainda não definiu senha).
+  senhaHash     String?   @map("senha_hash")
+  papel         Papel     @default(membro)
+  ativo         Boolean   @default(true)
+  /// Segredo TOTP cifrado. Só é gravado DEPOIS de a pessoa provar que o app
+  /// autenticador gera o código certo — até lá ele vive na sessão.
+  mfaSegredo    String?   @map("mfa_segredo")
+  mfaAtivadoEm  DateTime? @map("mfa_ativado_em")
+  /// Os 8 códigos de recuperação, cifrados, de uso único.
+  mfaCodigos    String?   @map("mfa_codigos")
+  ultimoAcessoEm DateTime? @map("ultimo_acesso_em")
+  criadoEm      DateTime  @default(now()) @map("criado_em")
+  atualizadoEm  DateTime  @updatedAt @map("atualizado_em")
+
+  organizacao        Organizacao          @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  documentosCriados  Documento[]          @relation("DocumentosCriados")
+  sessoes            Sessao[]
+  notificacoes       Notificacao[]
+  tokensDeSenha      TokenDeSenha[]
+
+  @@index([organizacaoId])
+  @@map("usuarios")
+}
+
+/// Metadado administrativo de sessão — o que a tela "Sessões ativas" lista.
+///
+/// ⚠️ A sessão EM SI vive no Redis, com TTL. Esta tabela é outra coisa: apagar a
+/// linha não derruba a sessão, e expirar a sessão não apaga o histórico. Revogar
+/// passa pelos dois (ver `SessaoService.revogar`).
+model Sessao {
+  id                Int       @id @default(autoincrement())
+  uuid              String    @unique @default(uuid()) @db.Uuid
+  organizacaoId     Int       @map("organizacao_id")
+  usuarioId         Int       @map("usuario_id")
+  /// SHA-256 do id da sessão. O id em si é credencial e nunca vai para o banco.
+  sessaoHash        String    @unique @map("sessao_hash")
+  ip                String?   @db.VarChar(64)
+  userAgent         String?   @map("user_agent") @db.VarChar(500)
+  criadaEm          DateTime  @default(now()) @map("criada_em")
+  ultimaAtividadeEm DateTime  @default(now()) @map("ultima_atividade_em")
+  revogadaEm        DateTime? @map("revogada_em")
+
+  organizacao Organizacao @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  usuario     Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([organizacaoId, usuarioId])
+  @@map("sessoes")
+}
+
+/// Token de uso único para definir senha: convite de membro ou "esqueci a senha".
+///
+/// ⚠️ Fora do escopo de tenant: é consultado por quem ainda não está logado.
+/// Guarda só o HASH do token — o token é credencial.
+model TokenDeSenha {
+  id        Int       @id @default(autoincrement())
+  usuarioId Int       @map("usuario_id")
+  tokenHash String    @unique @map("token_hash")
+  finalidade String   @db.VarChar(20) // 'convite' | 'redefinicao'
+  expiraEm  DateTime  @map("expira_em")
+  usadoEm   DateTime? @map("usado_em")
+  criadoEm  DateTime  @default(now()) @map("criado_em")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("tokens_de_senha")
+}
+
+// ---------------------------------------------------------------------------
+// Documentos e assinaturas
+// ---------------------------------------------------------------------------
+
+/// Um envelope: um PDF, um conjunto ordenado de signatários e o seu ciclo de vida.
+model Documento {
+  id                 Int                @id @default(autoincrement())
+  uuid               String             @unique @default(uuid()) @db.Uuid
+  organizacaoId      Int                @map("organizacao_id")
+  criadoPorId        Int                @map("criado_por_id")
+  titulo             String             @db.VarChar(160)
+  mensagem           String?            @db.VarChar(1000)
+  status             StatusDoDocumento  @default(rascunho)
+  nivelVerificacao   NivelDeVerificacao @default(simples) @map("nivel_verificacao")
+  /// `true`: cada signatário só assina depois do anterior. `false`: em paralelo.
+  ordemSequencial    Boolean            @default(false) @map("ordem_sequencial")
+  /// Código curto e público (ex.: `LS-7F3K-9Q2M`), impresso no PDF e no QR Code.
+  codigo             String             @unique @db.VarChar(20)
+
+  nomeArquivo        String             @map("nome_arquivo") @db.VarChar(200)
+  tamanhoBytes       Int                @map("tamanho_bytes")
+  paginas            Int
+  /// Chave no armazenamento privado. Nunca é uma URL pública.
+  arquivoOriginal    String             @map("arquivo_original")
+  /// SHA-256 do PDF exatamente como foi enviado. É a âncora de integridade.
+  hashOriginal       String             @map("hash_original") @db.Char(64)
+  arquivoAssinado    String?            @map("arquivo_assinado")
+  hashAssinado       String?            @map("hash_assinado") @db.Char(64)
+
+  /// Selo da plataforma: assinatura Ed25519 sobre a carga canônica de conclusão.
+  cargaDoSelo        String?            @map("carga_do_selo")
+  selo               String?
+
+  prazo              DateTime?
+  enviadoEm          DateTime?          @map("enviado_em")
+  concluidoEm        DateTime?          @map("concluido_em")
+  canceladoEm        DateTime?          @map("cancelado_em")
+  motivoCancelamento String?            @map("motivo_cancelamento") @db.VarChar(500)
+  criadoEm           DateTime           @default(now()) @map("criado_em")
+  atualizadoEm       DateTime           @updatedAt @map("atualizado_em")
+
+  organizacao Organizacao  @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  criadoPor   Usuario      @relation("DocumentosCriados", fields: [criadoPorId], references: [id])
+  signatarios Signatario[]
+
+  @@index([organizacaoId, status])
+  @@index([organizacaoId, criadoEm])
+  @@index([hashOriginal])
+  @@index([hashAssinado])
+  @@map("documentos")
+}
+
+model Signatario {
+  id              Int                @id @default(autoincrement())
+  uuid            String             @unique @default(uuid()) @db.Uuid
+  organizacaoId   Int                @map("organizacao_id")
+  documentoId     Int                @map("documento_id")
+  nome            String             @db.VarChar(120)
+  email           String             @db.VarChar(180)
+  /// CPF cifrado (AES-256-GCM). Só os dois últimos dígitos ficam em claro, para exibição mascarada.
+  cpfCifrado      String?            @map("cpf_cifrado")
+  cpfFinal        String?            @map("cpf_final") @db.VarChar(2)
+  ordem           Int
+  status          StatusDoSignatario @default(pendente)
+
+  /// SHA-256 do token do link de assinatura. O token é credencial e nunca é gravado.
+  tokenHash       String?            @unique @map("token_hash")
+  tokenExpiraEm   DateTime?          @map("token_expira_em")
+
+  visualizadoEm   DateTime?          @map("visualizado_em")
+  assinadoEm      DateTime?          @map("assinado_em")
+  recusadoEm      DateTime?          @map("recusado_em")
+  motivoRecusa    String?            @map("motivo_recusa") @db.VarChar(500)
+  ip              String?            @db.VarChar(64)
+  userAgent       String?            @map("user_agent") @db.VarChar(500)
+
+  tipoAssinatura  TipoDeAssinatura?  @map("tipo_assinatura")
+  /// PNG (data URL) da rubrica desenhada ou digitada. Vai para o manifesto do PDF.
+  imagemAssinatura String?           @map("imagem_assinatura")
+  /// A carga canônica (JSON ordenado) que foi assinada com Ed25519.
+  cargaAssinada   String?            @map("carga_assinada")
+  /// Assinatura Ed25519 da `cargaAssinada`, em base64.
+  assinaturaDigital String?          @map("assinatura_digital")
+  lembreteEm      DateTime?          @map("lembrete_em")
+  criadoEm        DateTime           @default(now()) @map("criado_em")
+  atualizadoEm    DateTime           @updatedAt @map("atualizado_em")
+
+  organizacao Organizacao            @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  documento   Documento              @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+  desafios    DesafioDeVerificacao[]
+
+  @@unique([documentoId, email])
+  @@index([organizacaoId, email])
+  @@map("signatarios")
+}
+
+/// Um desafio de verificação de identidade e o seu resultado.
+///
+/// ⚠️ LGPD: biometria é dado pessoal SENSÍVEL (art. 5º, II). A análise facial,
+/// de voz e de gestos acontece NO NAVEGADOR do signatário; o que chega aqui é só
+/// o resultado — aprovado ou não, pontuação e metadados. Nenhuma imagem, áudio
+/// ou vetor biométrico é transmitido ou gravado. É decisão de produto, não
+/// limitação técnica: ver `docs/decisoes/0004-biometria-no-navegador.md`.
+model DesafioDeVerificacao {
+  id            Int               @id @default(autoincrement())
+  uuid          String            @unique @default(uuid()) @db.Uuid
+  organizacaoId Int               @map("organizacao_id")
+  signatarioId  Int               @map("signatario_id")
+  tipo          TipoDeVerificacao
+  /// O que o servidor sorteou (palavras, sequência de gestos, ações de prova de
+  /// vida) — ou o HASH do código enviado por e-mail.
+  desafio       Json
+  tentativas    Int               @default(0)
+  expiraEm      DateTime          @map("expira_em")
+  concluidoEm   DateTime?         @map("concluido_em")
+  aprovado      Boolean?
+  pontuacao     Float?
+  /// Metadados do resultado (ex.: transcrição da voz, gestos reconhecidos).
+  resultado     Json?
+  criadoEm      DateTime          @default(now()) @map("criado_em")
+
+  organizacao Organizacao @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  signatario  Signatario  @relation(fields: [signatarioId], references: [id], onDelete: Cascade)
+
+  @@index([signatarioId, tipo])
+  @@map("desafios_de_verificacao")
+}
+
+// ---------------------------------------------------------------------------
+// Trilha de auditoria
+// ---------------------------------------------------------------------------
+
+/// Trilha de auditoria **append-only e encadeada por hash**.
+///
+/// Cada evento guarda o hash do anterior da mesma cadeia (`cadeia`), e o próprio
+/// hash cobre o conteúdo + o anterior. Alterar ou apagar qualquer evento quebra a
+/// cadeia daquele ponto em diante — e a validação pública mostra isso.
+///
+/// ⚠️ Sem `atualizadoEm`, sem caminho de edição, sem caminho de exclusão. Um único
+/// serviço escreve (`AuditoriaService`).
+model EventoDeAuditoria {
+  id            Int        @id @default(autoincrement())
+  organizacaoId Int        @map("organizacao_id")
+  /// `documento:<uuid>` ou `organizacao:<id>`.
+  cadeia        String     @db.VarChar(80)
+  sequencia     Int
+  documentoId   Int?       @map("documento_id")
+  tipoAtor      TipoDeAtor @map("tipo_ator")
+  atorId        Int?       @map("ator_id")
+  atorNome      String?    @map("ator_nome") @db.VarChar(120)
+  acao          String     @db.VarChar(60)
+  resumo        String     @db.VarChar(500)
+  dados         Json?
+  ip            String?    @db.VarChar(64)
+  userAgent     String?    @map("user_agent") @db.VarChar(500)
+  hashAnterior  String     @map("hash_anterior") @db.Char(64)
+  hash          String     @db.Char(64)
+  criadoEm      DateTime   @default(now()) @map("criado_em")
+
+  organizacao Organizacao @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+
+  @@unique([cadeia, sequencia])
+  @@index([organizacaoId, criadoEm])
+  @@index([documentoId])
+  @@map("eventos_de_auditoria")
+}
+
+// ---------------------------------------------------------------------------
+// Notificações in-app
+// ---------------------------------------------------------------------------
+
+model Notificacao {
+  id            Int       @id @default(autoincrement())
+  organizacaoId Int       @map("organizacao_id")
+  usuarioId     Int       @map("usuario_id")
+  titulo        String    @db.VarChar(160)
+  mensagem      String    @db.VarChar(500)
+  link          String?   @db.VarChar(300)
+  lidaEm        DateTime? @map("lida_em")
+  criadaEm      DateTime  @default(now()) @map("criada_em")
+
+  organizacao Organizacao @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  usuario     Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, lidaEm])
+  @@map("notificacoes")
+}

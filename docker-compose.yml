@@ -1,0 +1,75 @@
+# Infraestrutura local do LetsSign.
+#
+# A API e o SPA rodam FORA do Docker em desenvolvimento (`npm run dev`), que é o
+# que dá watch e debug. Aqui sobem só as dependências:
+#
+#   postgres  → banco de dados (PostgreSQL 17)
+#   redis     → sessão server-side, throttle de login e fila de e-mails (BullMQ)
+#   mailpit   → servidor SMTP de desenvolvimento, com caixa de entrada web em
+#               http://localhost:8035 — é onde chegam os convites de assinatura
+#               e os códigos de verificação enviados por e-mail.
+#
+# ⚠️ As portas fogem do padrão de propósito (5452, 6392, 1035, 8035) para não
+# colidir com outros projetos na mesma máquina. Sobrescreva com as variáveis
+# POSTGRES_PORT, REDIS_PORT, MAILPIT_SMTP_PORT e MAILPIT_UI_PORT.
+name: letssign
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: letssign-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: letssign
+      POSTGRES_PASSWORD: letssign
+      POSTGRES_DB: letssign
+      # A imagem oficial não traz pt_BR; C.UTF-8 é o locale disponível.
+      LANG: C.UTF-8
+    ports:
+      - '${POSTGRES_PORT:-5452}:5432'
+    volumes:
+      - letssign-postgres:/var/lib/postgresql/data
+    healthcheck:
+      # Com `-d` o healthy só sai quando dá para conectar de verdade.
+      test: ['CMD-SHELL', 'pg_isready -U letssign -d letssign']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: letssign-redis
+    restart: unless-stopped
+    # Sessão server-side não pode evaporar num restart do container.
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '${REDIS_PORT:-6392}:6379'
+    volumes:
+      - letssign-redis:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: letssign-mailpit
+    restart: unless-stopped
+    ports:
+      - '${MAILPIT_SMTP_PORT:-1035}:1025'
+      - '${MAILPIT_UI_PORT:-8035}:8025'
+    environment:
+      MP_MAX_MESSAGES: 2000
+    healthcheck:
+      test: ['CMD', '/mailpit', 'readyz']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  letssign-postgres:
+    name: letssign-postgres
+  letssign-redis:
+    name: letssign-redis

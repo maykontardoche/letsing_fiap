@@ -1,0 +1,118 @@
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-fundo text-tinta font-sans;
+    min-height: 100dvh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display tracking-tight;
+  }
+
+  /* ⚠️ Foco de teclado SEMPRE visível — quem navega por teclado precisa saber onde está. */
+  :focus-visible {
+    outline: 2px solid var(--destaque);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--destaque) 25%, transparent);
+  }
+
+  /* Números em coluna alinham: sem isto, uma coluna de datas e hashes não se lê em varredura. */
+  .numeros {
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .bg-gradiente-marca {
+    background-image: var(--gradiente-marca);
+  }
+
+  .bg-gradiente-marca-texto {
+    background-image: var(--gradiente-marca-texto);
+  }
+
+  /* Texto com o gradiente de marca (títulos da landing). */
+  .texto-gradiente {
+    background-image: linear-gradient(120deg, #818cf8 0%, #c084fc 45%, #22d3ee 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .texto-gradiente-escuro {
+    background-image: var(--gradiente-marca-texto);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Grade sutil de fundo para seções escuras. */
+  .grade-de-fundo {
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.04) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+
+  /* Esqueleto de carregamento com brilho deslizante. */
+  .esqueleto {
+    background: linear-gradient(
+      90deg,
+      var(--superficie-2) 0%,
+      var(--superficie-3) 50%,
+      var(--superficie-2) 100%
+    );
+    background-size: 200% 100%;
+    animation: var(--animate-brilho);
+  }
+
+  /* Borda com gradiente animado (cartão de destaque). */
+  .borda-gradiente {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .borda-gradiente::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--gradiente-marca);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    z-index: -1;
+  }
+
+  .rolagem-fina {
+    scrollbar-width: thin;
+    scrollbar-color: var(--linha-forte) transparent;
+  }
+}

@@ -1,0 +1,21 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Ambiente — nunca versionar segredos. Os modelos são `.env.example`.
+.env
+.env.local
+.env.*.local
+
+# Arquivos enviados, PDFs assinados e chaves locais da plataforma.
+apps/api/storage/
+
+# Editores e sistema
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*

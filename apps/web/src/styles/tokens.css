@@ -1,0 +1,209 @@
+@import 'tailwindcss';
+
+/**
+ * Design system do **LetsSign** — tokens.
+ *
+ * Duas camadas, e a separação é o que torna o tema escuro barato:
+ *
+ * 1. **Paleta** (`@theme`): valores brutos — `brand-600`, `violeta-500`…
+ * 2. **Semântica** (`@theme inline` + variáveis em `:root`): `fundo`, `superficie`,
+ *    `tinta`, `linha`… Componente usa **só** a semântica. O tema escuro troca as
+ *    variáveis, e nenhum componente precisa saber que ele existe.
+ *
+ * ⚠️ Token não se redefine em componente. Cor solta em hexadecimal no meio de um
+ * `.tsx` é o começo do fim de um design system.
+ *
+ * ⚠️ Contraste WCAG 2.2 AA (4.5:1 para texto) é gate: os tons `*-tinta` existem
+ * porque as cores de status "de marca" não passam como cor de texto sobre o
+ * próprio fundo suave. Texto de status usa sempre `*-tinta`.
+ */
+
+@custom-variant dark (&:where([data-tema='escuro'], [data-tema='escuro'] *));
+
+@theme {
+  /* ---- Marca: índigo elétrico ---- */
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-300: #a5b4fc;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
+  --color-brand-950: #1e1b4b;
+
+  /* ---- Acentos do gradiente ---- */
+  --color-violeta-400: #a78bfa;
+  --color-violeta-500: #8b5cf6;
+  --color-violeta-600: #7c3aed;
+  --color-ciano-300: #67e8f9;
+  --color-ciano-400: #22d3ee;
+  --color-ciano-500: #06b6d4;
+  --color-ciano-700: #0e7490;
+
+  /* ---- Noite: superfícies escuras da landing ---- */
+  --color-noite-950: #05070f;
+  --color-noite-900: #0a0e1c;
+  --color-noite-800: #111733;
+  --color-noite-700: #1b2247;
+
+  /* ---- Tipografia ---- */
+  --font-display: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+  --font-assinatura: 'Caveat', 'Segoe Script', cursive;
+
+  /* ---- Raios ---- */
+  --radius-cartao: 1.25rem;
+  --radius-controle: 0.75rem;
+
+  /* ---- Animações ---- */
+  --animate-surgir: surgir 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-flutuar: flutuar 6s ease-in-out infinite;
+  --animate-brilho: brilho 2.4s linear infinite;
+  --animate-pulso-suave: pulso-suave 2s ease-in-out infinite;
+
+  @keyframes surgir {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes flutuar {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes brilho {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  @keyframes pulso-suave {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.55;
+    }
+  }
+}
+
+/* ---- Semântica: a única camada que componente usa ---- */
+@theme inline {
+  --color-fundo: var(--fundo);
+  --color-superficie: var(--superficie);
+  --color-superficie-2: var(--superficie-2);
+  --color-superficie-3: var(--superficie-3);
+  --color-linha: var(--linha);
+  --color-linha-forte: var(--linha-forte);
+  --color-tinta: var(--tinta);
+  --color-tinta-2: var(--tinta-2);
+  --color-tinta-3: var(--tinta-3);
+  --color-destaque: var(--destaque);
+  --color-destaque-suave: var(--destaque-suave);
+  --color-destaque-tinta: var(--destaque-tinta);
+
+  --color-sucesso: var(--sucesso);
+  --color-sucesso-suave: var(--sucesso-suave);
+  --color-sucesso-tinta: var(--sucesso-tinta);
+  --color-alerta: var(--alerta);
+  --color-alerta-suave: var(--alerta-suave);
+  --color-alerta-tinta: var(--alerta-tinta);
+  --color-perigo: var(--perigo);
+  --color-perigo-suave: var(--perigo-suave);
+  --color-perigo-tinta: var(--perigo-tinta);
+  --color-neutro-suave: var(--neutro-suave);
+  --color-neutro-tinta: var(--neutro-tinta);
+
+  --shadow-cartao: var(--sombra-cartao);
+  --shadow-elevada: var(--sombra-elevada);
+  --shadow-brilho: var(--sombra-brilho);
+}
+
+:root {
+  color-scheme: light;
+
+  --fundo: #f6f7fb;
+  --superficie: #ffffff;
+  --superficie-2: #f3f4f9;
+  --superficie-3: #e9ebf3;
+  --linha: #e4e7f0;
+  --linha-forte: #cdd2e1;
+  --tinta: #0f1629;
+  --tinta-2: #4a5470;
+  --tinta-3: #6b7390;
+  --destaque: #4f46e5;
+  --destaque-suave: #eef0ff;
+  --destaque-tinta: #3f37c9;
+
+  --sucesso: #10b981;
+  --sucesso-suave: #e8f8f1;
+  --sucesso-tinta: #047857;
+  --alerta: #f59e0b;
+  --alerta-suave: #fef5e4;
+  --alerta-tinta: #92400e;
+  --perigo: #ef4444;
+  --perigo-suave: #fdeded;
+  --perigo-tinta: #b91c1c;
+  --neutro-suave: #eef0f5;
+  --neutro-tinta: #475069;
+
+  --sombra-cartao: 0 1px 2px rgb(15 22 41 / 0.04), 0 2px 8px rgb(15 22 41 / 0.05);
+  --sombra-elevada: 0 12px 40px -12px rgb(15 22 41 / 0.22), 0 4px 12px rgb(15 22 41 / 0.06);
+  --sombra-brilho: 0 10px 40px -10px rgb(79 70 229 / 0.55);
+
+  /* Gradiente de marca. A versão `-texto` sustenta texto branco (≥ 4.5:1 em toda a curva). */
+  --gradiente-marca: linear-gradient(135deg, #4f46e5 0%, #7c3aed 52%, #06b6d4 100%);
+  --gradiente-marca-texto: linear-gradient(135deg, #4338ca 0%, #6d28d9 55%, #0e7490 100%);
+}
+
+:root[data-tema='escuro'] {
+  color-scheme: dark;
+
+  --fundo: #070a14;
+  --superficie: #0e1322;
+  --superficie-2: #141a2e;
+  --superficie-3: #1c2340;
+  --linha: #1f2742;
+  --linha-forte: #2c3659;
+  --tinta: #eef1fb;
+  --tinta-2: #aab3cf;
+  --tinta-3: #8891b0;
+  --destaque: #818cf8;
+  --destaque-suave: #1b1f45;
+  --destaque-tinta: #a5b4fc;
+
+  --sucesso: #34d399;
+  --sucesso-suave: #0d2a22;
+  --sucesso-tinta: #6ee7b7;
+  --alerta: #fbbf24;
+  --alerta-suave: #2d230c;
+  --alerta-tinta: #fcd34d;
+  --perigo: #f87171;
+  --perigo-suave: #2f1216;
+  --perigo-tinta: #fca5a5;
+  --neutro-suave: #1a2036;
+  --neutro-tinta: #b4bcd6;
+
+  --sombra-cartao: 0 1px 2px rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.02);
+  --sombra-elevada: 0 20px 50px -12px rgb(0 0 0 / 0.7);
+  --sombra-brilho: 0 10px 40px -10px rgb(129 140 248 / 0.45);
+}

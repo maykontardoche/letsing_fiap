@@ -1,0 +1,29 @@
+{
+  "name": "letssign",
+  "version": "1.0.0",
+  "description": "LetsSign — plataforma de assinatura eletrônica avançada com verificação biométrica, criptografia Ed25519 e trilha de auditoria encadeada por hash.",
+  "private": true,
+  "license": "MIT",
+  "author": "Maykon Tardoche",
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "infra:up": "docker compose up -d --wait",
+    "infra:down": "docker compose down",
+    "setup": "npm run infra:up && npm run db:migrate -w apps/api && npm run db:seed -w apps/api",
+    "dev": "concurrently -n api,web -c magenta,cyan \"npm run dev -w apps/api\" \"npm run dev -w apps/web\"",
+    "build": "npm run build -w apps/api && npm run build -w apps/web",
+    "lint": "npm run lint -w apps/api && npm run lint -w apps/web",
+    "typecheck": "npm run typecheck -w apps/api && npm run typecheck -w apps/web",
+    "test": "npm run test -w apps/api && npm run test -w apps/web",
+    "verificar": "npm run lint && npm run typecheck && npm run test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

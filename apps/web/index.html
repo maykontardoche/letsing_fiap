@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta
+      name="description"
+      content="LetsSign — assinatura eletrônica avançada com verificação biométrica, criptografia Ed25519 e validação pública por QR Code."
+    />
+    <link rel="icon" type="image/svg+xml" href="/icone.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+    />
+    <title>LetsSign — Assinatura eletrônica com verificação de identidade</title>
+    <script>
+      // Aplica o tema antes do primeiro paint — sem isso a página pisca clara
+      // antes de virar escura. Preferência de exibição, não dado sensível.
+      (function () {
+        try {
+          var salvo = localStorage.getItem('letssign:tema');
+          var escuro = salvo ? salvo === 'escuro' : matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.dataset.tema = escuro ? 'escuro' : 'claro';
+        } catch (e) {
+          document.documentElement.dataset.tema = 'claro';
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
