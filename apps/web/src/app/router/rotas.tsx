@@ -1,6 +1,8 @@
 import { createBrowserRouter, type RouteObject } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { LandingPage } from '@/pages/publico/LandingPage';
+import { ValidarPage } from '@/pages/publico/ValidarPage';
+import { AssinarPage } from '@/pages/assinar/AssinarPage';
 import { EmConstrucaoPage } from '@/pages/EmConstrucaoPage';
 import { CadastroPage } from '@/pages/auth/CadastroPage';
 import { EntrarPage } from '@/pages/auth/EntrarPage';
@@ -18,6 +20,10 @@ export const rotas: RouteObject[] = [
     errorElement: <FronteiraDeErro />,
     children: [
       { path: '/', element: <LandingPage /> },
+      { path: '/validar', element: <ValidarPage /> },
+      { path: '/validar/:codigo', element: <ValidarPage /> },
+      // Público: quem assina não tem conta — o token do link é a credencial.
+      { path: '/assinar/:token', element: <AssinarPage /> },
       { path: '/entrar', element: <EntrarPage /> },
       { path: '/cadastro', element: <CadastroPage /> },
       { path: '/esqueci-senha', element: <EsqueciSenhaPage /> },
