@@ -16,13 +16,16 @@ function lerTema(): Tema {
 function assinar(aoMudar: () => void): () => void {
   const observador = new MutationObserver(aoMudar);
 
-  observador.observe(document.documentElement, { attributes: true, attributeFilter: ['data-tema'] });
+  observador.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-tema'],
+  });
 
   return () => observador.disconnect();
 }
 
 export function useTema() {
-  const tema = useSyncExternalStore(assinar, lerTema, () => 'claro' as Tema);
+  const tema = useSyncExternalStore(assinar, lerTema, () => 'claro');
 
   const definirTema = useCallback((novo: Tema) => {
     document.documentElement.dataset.tema = novo;

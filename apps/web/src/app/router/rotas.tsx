@@ -11,7 +11,9 @@ import { RotaProtegida } from './RotaProtegida';
  * ele — quem vai só validar um documento não carrega o painel nem os gráficos.
  */
 function sobDemanda<T, K extends keyof T>(carregar: () => Promise<T>, nome: K) {
-  const Componente = lazy(() => carregar().then((modulo) => ({ default: modulo[nome] as unknown as ComponentType })));
+  const Componente = lazy(() =>
+    carregar().then((modulo) => ({ default: modulo[nome] as unknown as ComponentType })),
+  );
 
   return function Carregado(): ReactNode {
     return (
@@ -31,21 +33,45 @@ function sobDemanda<T, K extends keyof T>(carregar: () => Promise<T>, nome: K) {
 
 const EntrarPage = sobDemanda(() => import('@/pages/auth/EntrarPage'), 'EntrarPage');
 const CadastroPage = sobDemanda(() => import('@/pages/auth/CadastroPage'), 'CadastroPage');
-const EsqueciSenhaPage = sobDemanda(() => import('@/pages/auth/RecuperacaoPages'), 'EsqueciSenhaPage');
-const RedefinirSenhaPage = sobDemanda(() => import('@/pages/auth/RecuperacaoPages'), 'RedefinirSenhaPage');
+const EsqueciSenhaPage = sobDemanda(
+  () => import('@/pages/auth/RecuperacaoPages'),
+  'EsqueciSenhaPage',
+);
+const RedefinirSenhaPage = sobDemanda(
+  () => import('@/pages/auth/RecuperacaoPages'),
+  'RedefinirSenhaPage',
+);
 const MfaPage = sobDemanda(() => import('@/pages/auth/RecuperacaoPages'), 'MfaPage');
 const ValidarPage = sobDemanda(() => import('@/pages/publico/ValidarPage'), 'ValidarPage');
 const AssinarPage = sobDemanda(() => import('@/pages/assinar/AssinarPage'), 'AssinarPage');
 const AppShell = sobDemanda(() => import('@/components/layout/AppShell'), 'AppShell');
 const PainelPage = sobDemanda(() => import('@/pages/app/PainelPage'), 'PainelPage');
-const DocumentosPage = sobDemanda(() => import('@/pages/app/documentos/DocumentosPage'), 'DocumentosPage');
-const NovoDocumentoPage = sobDemanda(() => import('@/pages/app/documentos/NovoDocumentoPage'), 'NovoDocumentoPage');
-const DetalheDoDocumentoPage = sobDemanda(() => import('@/pages/app/documentos/DetalheDoDocumentoPage'), 'DetalheDoDocumentoPage');
-const PrepararDocumentoPage = sobDemanda(() => import('@/pages/app/documentos/PrepararDocumentoPage'), 'PrepararDocumentoPage');
+const DocumentosPage = sobDemanda(
+  () => import('@/pages/app/documentos/DocumentosPage'),
+  'DocumentosPage',
+);
+const NovoDocumentoPage = sobDemanda(
+  () => import('@/pages/app/documentos/NovoDocumentoPage'),
+  'NovoDocumentoPage',
+);
+const DetalheDoDocumentoPage = sobDemanda(
+  () => import('@/pages/app/documentos/DetalheDoDocumentoPage'),
+  'DetalheDoDocumentoPage',
+);
+const PrepararDocumentoPage = sobDemanda(
+  () => import('@/pages/app/documentos/PrepararDocumentoPage'),
+  'PrepararDocumentoPage',
+);
 const EquipePage = sobDemanda(() => import('@/pages/app/EquipePage'), 'EquipePage');
 const AuditoriaPage = sobDemanda(() => import('@/pages/app/AuditoriaPage'), 'AuditoriaPage');
-const ConfiguracoesPage = sobDemanda(() => import('@/pages/app/ConfiguracoesPage'), 'ConfiguracoesPage');
-const NaoEncontradaPage = sobDemanda(() => import('@/pages/NaoEncontradaPage'), 'NaoEncontradaPage');
+const ConfiguracoesPage = sobDemanda(
+  () => import('@/pages/app/ConfiguracoesPage'),
+  'ConfiguracoesPage',
+);
+const NaoEncontradaPage = sobDemanda(
+  () => import('@/pages/NaoEncontradaPage'),
+  'NaoEncontradaPage',
+);
 
 export const rotas: RouteObject[] = [
   {

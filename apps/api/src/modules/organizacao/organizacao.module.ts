@@ -41,18 +41,30 @@ export class OrganizacaoService {
       nome: organizacao.nome,
       plano: organizacao.plano,
       criadoEm: organizacao.criadoEm,
-      uso: { enviadosNoMes: enviados, limiteDeEnvios: limites.enviosPorMes, membros, limiteDeMembros: limites.membros },
+      uso: {
+        enviadosNoMes: enviados,
+        limiteDeEnvios: limites.enviosPorMes,
+        membros,
+        limiteDeMembros: limites.membros,
+      },
     };
   }
 
   async atualizar(usuario: UsuarioAutenticado, dto: AtualizarOrganizacaoDto, origem: Origem) {
-    const antes = await this.prisma.db.organizacao.findUniqueOrThrow({ where: { id: usuario.organizacaoId } });
+    const antes = await this.prisma.db.organizacao.findUniqueOrThrow({
+      where: { id: usuario.organizacaoId },
+    });
 
-    await this.prisma.db.organizacao.update({ where: { id: usuario.organizacaoId }, data: { nome: dto.nome, plano: dto.plano } });
+    await this.prisma.db.organizacao.update({
+      where: { id: usuario.organizacaoId },
+      data: { nome: dto.nome, plano: dto.plano },
+    });
 
     const mudancas = [
       dto.nome && dto.nome !== antes.nome ? `nome para “${dto.nome}”` : null,
-      dto.plano && dto.plano !== antes.plano ? `plano de ${ROTULO_DO_PLANO[antes.plano]} para ${ROTULO_DO_PLANO[dto.plano]}` : null,
+      dto.plano && dto.plano !== antes.plano
+        ? `plano de ${ROTULO_DO_PLANO[antes.plano]} para ${ROTULO_DO_PLANO[dto.plano]}`
+        : null,
     ].filter(Boolean);
 
     if (mudancas.length > 0) {
@@ -82,7 +94,11 @@ export class OrganizacaoController {
 
   @Patch()
   @ExigePermissao('organizacao.gerenciar')
-  atualizar(@UsuarioAtual() usuario: UsuarioAutenticado, @Body() dto: AtualizarOrganizacaoDto, @OrigemDaRequisicao() origem: Origem) {
+  atualizar(
+    @UsuarioAtual() usuario: UsuarioAutenticado,
+    @Body() dto: AtualizarOrganizacaoDto,
+    @OrigemDaRequisicao() origem: Origem,
+  ) {
     return this.servico.atualizar(usuario, dto, origem);
   }
 }

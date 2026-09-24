@@ -28,10 +28,14 @@ export function EntrarPage() {
   const [erro, definirErro] = useState<string | null>(null);
   const destino = destinoSeguro(parametros.get('voltar'));
 
-  const formulario = useForm<Dados>({ resolver: zodResolver(esquema), defaultValues: { email: '', senha: '' } });
+  const formulario = useForm<Dados>({
+    resolver: zodResolver(esquema),
+    defaultValues: { email: '', senha: '' },
+  });
 
   if (estado.situacao === 'autenticado') return <Navigate to={destino} replace />;
-  if (estado.situacao === 'precisa-mfa') return <Navigate to={`/mfa?voltar=${encodeURIComponent(destino)}`} replace />;
+  if (estado.situacao === 'precisa-mfa')
+    return <Navigate to={`/mfa?voltar=${encodeURIComponent(destino)}`} replace />;
 
   const enviar = formulario.handleSubmit(async (dados) => {
     definirErro(null);
@@ -40,12 +44,12 @@ export function EntrarPage() {
       const { precisaMfa } = await apiDeSessao.entrar(dados);
 
       if (precisaMfa) {
-        navegar(`/mfa?voltar=${encodeURIComponent(destino)}`, { replace: true });
+        void navegar(`/mfa?voltar=${encodeURIComponent(destino)}`, { replace: true });
         return;
       }
 
       await recarregar();
-      navegar(destino, { replace: true });
+      void navegar(destino, { replace: true });
     } catch (causa) {
       // ⚠️ A mensagem do servidor é ambígua de propósito ("e-mail ou senha") e é repassada sem reescrita.
       definirErro(mensagemDoErro(causa));
@@ -71,7 +75,13 @@ export function EntrarPage() {
         {erro && <Alerta tom="perigo">{erro}</Alerta>}
 
         <Campo rotulo="E-mail" erro={errors.email?.message}>
-          <Entrada type="email" autoComplete="email" placeholder="voce@empresa.com.br" icone={<Mail />} {...formulario.register('email')} />
+          <Entrada
+            type="email"
+            autoComplete="email"
+            placeholder="voce@empresa.com.br"
+            icone={<Mail />}
+            {...formulario.register('email')}
+          />
         </Campo>
 
         <Campo rotulo="Senha" erro={errors.senha?.message}>

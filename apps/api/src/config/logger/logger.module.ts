@@ -35,7 +35,9 @@ import { CENSURA, redigirProfundo } from './redaction';
               redigirProfundo(objeto) as Record<string, unknown>,
           },
           // Health é batido sem parar; logar cada batida afoga o log útil.
-          autoLogging: { ignore: (req: IncomingMessage) => req.url?.startsWith('/api/saude') ?? false },
+          autoLogging: {
+            ignore: (req: IncomingMessage) => req.url?.startsWith('/api/saude') ?? false,
+          },
           transport:
             env.ambiente === 'development'
               ? { target: 'pino-pretty', options: { singleLine: true, translateTime: 'HH:MM:ss' } }

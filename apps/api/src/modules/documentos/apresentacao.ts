@@ -14,7 +14,10 @@ type SignatarioComDesafios = Signatario & { desafios: DesafioDeVerificacao[] };
  * coluna nova que alguém adicionou mês que vem.
  */
 export function resumoDoDocumento(
-  documento: Documento & { criadoPor: Pick<Usuario, 'nome'>; signatarios: Pick<Signatario, 'nome' | 'status' | 'ordem'>[] },
+  documento: Documento & {
+    criadoPor: Pick<Usuario, 'nome'>;
+    signatarios: Pick<Signatario, 'nome' | 'status' | 'ordem'>[];
+  },
 ) {
   const assinados = documento.signatarios.filter((s) => s.status === 'assinado').length;
 
@@ -38,7 +41,10 @@ export function resumoDoDocumento(
 }
 
 export function detalheDoDocumento(
-  documento: Documento & { criadoPor: Pick<Usuario, 'nome' | 'email'>; signatarios: SignatarioComDesafios[] },
+  documento: Documento & {
+    criadoPor: Pick<Usuario, 'nome' | 'email'>;
+    signatarios: SignatarioComDesafios[];
+  },
   extras: { podeGerenciar: boolean; urlDeValidacao: string; meuSignatario: string | null },
 ) {
   const exigidas = VERIFICACOES_DO_NIVEL[documento.nivelVerificacao];
@@ -68,7 +74,8 @@ export function detalheDoDocumento(
       cpfMascarado: mascararCpf(s.cpfFinal),
       ordem: s.ordem,
       status: s.status,
-      ehAVez: documento.status === 'em_andamento' && ehAVezDe(s, signatarios, documento.ordemSequencial),
+      ehAVez:
+        documento.status === 'em_andamento' && ehAVezDe(s, signatarios, documento.ordemSequencial),
       visualizadoEm: s.visualizadoEm,
       assinadoEm: s.assinadoEm,
       recusadoEm: s.recusadoEm,
@@ -77,7 +84,12 @@ export function detalheDoDocumento(
       verificacoes: exigidas.map((tipo) => {
         const aprovado = s.desafios.find((d) => d.tipo === tipo && d.aprovado === true);
 
-        return { tipo, aprovada: aprovado !== undefined, concluidaEm: aprovado?.concluidoEm ?? null, pontuacao: aprovado?.pontuacao ?? null };
+        return {
+          tipo,
+          aprovada: aprovado !== undefined,
+          concluidaEm: aprovado?.concluidoEm ?? null,
+          pontuacao: aprovado?.pontuacao ?? null,
+        };
       }),
     })),
   };

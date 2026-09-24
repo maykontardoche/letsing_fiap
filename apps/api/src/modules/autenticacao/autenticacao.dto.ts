@@ -1,8 +1,18 @@
 import { Transform } from 'class-transformer';
-import { IsEmail, IsEnum, IsOptional, IsString, Length, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { Plano } from '@prisma/client';
 
-const aparar = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
+const aparar = ({ value }: { value: unknown }) =>
+  typeof value === 'string' ? value.trim() : value;
 const emailNormalizado = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim().toLowerCase() : value;
 

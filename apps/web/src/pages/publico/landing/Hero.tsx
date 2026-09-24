@@ -46,8 +46,8 @@ export function Hero() {
             transition={{ duration: 0.6, delay: 0.08 }}
             className="mt-6 text-4xl leading-[1.05] font-extrabold sm:text-5xl lg:text-6xl"
           >
-            Assine documentos com a{' '}
-            <span className="texto-gradiente">certeza de quem assinou</span>.
+            Assine documentos com a <span className="texto-gradiente">certeza de quem assinou</span>
+            .
           </motion.h1>
 
           <motion.p
@@ -57,8 +57,8 @@ export function Hero() {
             className="mt-6 max-w-xl text-lg leading-relaxed text-white/70"
           >
             O LetsSign combina verificação de identidade biométrica, assinatura criptográfica
-            Ed25519 e uma trilha de auditoria à prova de adulteração. Cada documento sai com
-            QR Code de validação pública — qualquer pessoa confere a autenticidade em segundos.
+            Ed25519 e uma trilha de auditoria à prova de adulteração. Cada documento sai com QR Code
+            de validação pública — qualquer pessoa confere a autenticidade em segundos.
           </motion.p>
 
           <motion.div

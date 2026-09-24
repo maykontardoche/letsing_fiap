@@ -35,8 +35,13 @@ export const apiDeSessao = {
   perfil: () => http.get<Perfil>('/me'),
   entrar: (dados: { email: string; senha: string }) =>
     http.post<RespostaDeEntrada>('/auth/entrar', dados),
-  cadastrar: (dados: { nomeOrganizacao: string; nome: string; email: string; senha: string; plano?: IdDoPlano }) =>
-    http.post<void>('/auth/cadastro', dados),
+  cadastrar: (dados: {
+    nomeOrganizacao: string;
+    nome: string;
+    email: string;
+    senha: string;
+    plano?: IdDoPlano;
+  }) => http.post<void>('/auth/cadastro', dados),
   desafioMfa: (codigo: string) => http.post<void>('/auth/mfa', { codigo }),
   sair: () => http.post<void>('/auth/sair'),
   esqueciSenha: (email: string) => http.post<void>('/auth/esqueci-senha', { email }),

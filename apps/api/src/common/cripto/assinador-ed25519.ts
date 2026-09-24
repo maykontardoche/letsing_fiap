@@ -68,13 +68,21 @@ export class AssinadorEd25519 {
     const carga = jsonCanonico(dados);
 
     // Ed25519 não usa digest separado: o algoritmo é `null` por especificação.
-    return { carga, assinatura: sign(null, Buffer.from(carga, 'utf8'), this.privada).toString('base64') };
+    return {
+      carga,
+      assinatura: sign(null, Buffer.from(carga, 'utf8'), this.privada).toString('base64'),
+    };
   }
 
   /** Verifica uma assinatura sobre a carga **exata** que foi assinada. */
   verificar(carga: string, assinatura: string): boolean {
     try {
-      return verify(null, Buffer.from(carga, 'utf8'), this.publica, Buffer.from(assinatura, 'base64'));
+      return verify(
+        null,
+        Buffer.from(carga, 'utf8'),
+        this.publica,
+        Buffer.from(assinatura, 'base64'),
+      );
     } catch {
       // Assinatura malformada (base64 truncado, tamanho errado) é "inválida", não 500.
       return false;

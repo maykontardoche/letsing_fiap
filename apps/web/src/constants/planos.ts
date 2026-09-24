@@ -73,5 +73,5 @@ export const PLANOS: readonly Plano[] = [
 ];
 
 export function planoPorId(id: string): Plano {
-  return PLANOS.find((plano) => plano.id === id) ?? (PLANOS[0] as Plano);
+  return PLANOS.find((plano) => plano.id === id) ?? PLANOS[0];
 }

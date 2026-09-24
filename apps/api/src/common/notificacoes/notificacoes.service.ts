@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
+import { comOrganizacaoDoContexto } from '../tenancy/dados-escopados';
 import { PrismaService, type TransacaoEscopada } from '../../config/database/prisma.service';
 
 export interface NovaNotificacao {
@@ -19,13 +21,13 @@ export class NotificacoesService {
     const cliente = tx ?? this.prisma.db;
 
     await cliente.notificacao.create({
-      data: {
+      data: comOrganizacaoDoContexto<Prisma.NotificacaoUncheckedCreateInput>({
         usuarioId: nova.usuarioId,
         titulo: nova.titulo.slice(0, 160),
         mensagem: nova.mensagem.slice(0, 500),
         link: nova.link ?? null,
         ...(nova.organizacaoId === undefined ? {} : { organizacaoId: nova.organizacaoId }),
-      } as { usuarioId: number; titulo: string; mensagem: string; link: string | null; organizacaoId: number },
+      }),
     });
   }
 }

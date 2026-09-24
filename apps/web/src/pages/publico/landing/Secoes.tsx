@@ -60,7 +60,15 @@ function Titulo({
 }
 
 /** Aparece ao entrar na viewport — uma vez só, sem piscar ao rolar de volta. */
-function Surgir({ children, atraso = 0, className }: { readonly children: ReactNode; readonly atraso?: number; readonly className?: string }) {
+function Surgir({
+  children,
+  atraso = 0,
+  className,
+}: {
+  readonly children: ReactNode;
+  readonly atraso?: number;
+  readonly className?: string;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -106,22 +114,26 @@ const PASSOS = [
   {
     icone: FileUp,
     titulo: 'Envie o PDF',
-    texto: 'O arquivo recebe uma impressão digital SHA-256 no instante do upload. Qualquer alteração depois disso é detectável.',
+    texto:
+      'O arquivo recebe uma impressão digital SHA-256 no instante do upload. Qualquer alteração depois disso é detectável.',
   },
   {
     icone: UserPlus,
     titulo: 'Convide quem assina',
-    texto: 'Defina a ordem, o prazo e o nível de verificação. Cada pessoa recebe um link único e intransferível por e-mail.',
+    texto:
+      'Defina a ordem, o prazo e o nível de verificação. Cada pessoa recebe um link único e intransferível por e-mail.',
   },
   {
     icone: ScanFace,
     titulo: 'Identidade comprovada',
-    texto: 'Código por e-mail, rosto com prova de vida, voz e gestos — conforme o nível exigido pelo documento.',
+    texto:
+      'Código por e-mail, rosto com prova de vida, voz e gestos — conforme o nível exigido pelo documento.',
   },
   {
     icone: FileSignature,
     titulo: 'Documento selado',
-    texto: 'O PDF final ganha manifesto de assinaturas, QR Code de validação e o selo criptográfico da plataforma.',
+    texto:
+      'O PDF final ganha manifesto de assinaturas, QR Code de validação e o selo criptográfico da plataforma.',
   },
 ] as const;
 
@@ -162,19 +174,22 @@ const VERIFICACOES = [
   {
     icone: ScanFace,
     titulo: 'Rosto com prova de vida',
-    texto: 'Detecção facial em tempo real com desafio aleatório: piscar, virar à esquerda, virar à direita. Foto impressa ou tela não passam.',
+    texto:
+      'Detecção facial em tempo real com desafio aleatório: piscar, virar à esquerda, virar à direita. Foto impressa ou tela não passam.',
     cor: 'from-brand-500 to-violeta-600',
   },
   {
     icone: Mic,
     titulo: 'Desafio de voz',
-    texto: 'O servidor sorteia palavras que só valem por cinco minutos. A pessoa fala, o navegador transcreve, o servidor confere.',
+    texto:
+      'O servidor sorteia palavras que só valem por cinco minutos. A pessoa fala, o navegador transcreve, o servidor confere.',
     cor: 'from-violeta-600 to-fuchsia-500',
   },
   {
     icone: Hand,
     titulo: 'Sequência de gestos',
-    texto: 'Uma sequência de gestos com a mão, sorteada a cada tentativa e reconhecida por visão computacional (MediaPipe).',
+    texto:
+      'Uma sequência de gestos com a mão, sorteada a cada tentativa e reconhecida por visão computacional (MediaPipe).',
     cor: 'from-ciano-500 to-brand-500',
   },
 ] as const;
@@ -197,7 +212,8 @@ export function Biometria() {
           sobre="Verificação de identidade"
           titulo={
             <>
-              Três camadas de biometria. <span className="texto-gradiente">Zero biometria armazenada.</span>
+              Três camadas de biometria.{' '}
+              <span className="texto-gradiente">Zero biometria armazenada.</span>
             </>
           }
           descricao="A análise acontece no dispositivo de quem assina. Para o servidor vão só o resultado e a pontuação — nunca imagem, áudio ou vetor biométrico."
@@ -233,10 +249,12 @@ export function Biometria() {
           <div className="mx-auto mt-10 flex max-w-3xl items-start gap-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.06] p-5">
             <EyeOff className="mt-0.5 size-5 shrink-0 text-emerald-300" aria-hidden="true" />
             <p className="text-sm leading-relaxed text-emerald-50/80">
-              <strong className="text-emerald-200">Privacidade por desenho (LGPD, art. 5º, II).</strong>{' '}
+              <strong className="text-emerald-200">
+                Privacidade por desenho (LGPD, art. 5º, II).
+              </strong>{' '}
               Biometria é dado pessoal sensível. Por isso o processamento é local e o LetsSign
-              guarda apenas a evidência do resultado — o que basta para a trilha de auditoria e
-              não expõe ninguém num eventual vazamento.
+              guarda apenas a evidência do resultado — o que basta para a trilha de auditoria e não
+              expõe ninguém num eventual vazamento.
             </p>
           </div>
         </Surgir>
@@ -248,12 +266,40 @@ export function Biometria() {
 // ---------------------------------------------------------------------------
 
 const PILARES = [
-  { icone: KeyRound, titulo: 'Assinatura Ed25519', texto: 'Cada assinatura é uma assinatura digital de curva elíptica sobre uma carga canônica. Chave pública publicada.' },
-  { icone: Fingerprint, titulo: 'Integridade SHA-256', texto: 'Hash do original e do PDF final. Um byte alterado e a validação pública denuncia.' },
-  { icone: Link2, titulo: 'Trilha encadeada', texto: 'Cada evento guarda o hash do anterior, como uma blockchain privada. Apagar ou editar quebra a cadeia.' },
-  { icone: Lock, titulo: 'Dados cifrados', texto: 'CPF e segredos de MFA ficam em repouso com AES-256-GCM, cifra autenticada.' },
-  { icone: Building2, titulo: 'Isolamento multiempresa', texto: 'Toda query é escopada pela organização no servidor, com teste de isolamento como gate da suíte.' },
-  { icone: ServerCog, titulo: 'Sessão blindada', texto: 'Sessão server-side em Redis, cookie httpOnly, MFA TOTP, CSP rígida e limite de tentativas.' },
+  {
+    icone: KeyRound,
+    titulo: 'Assinatura Ed25519',
+    texto:
+      'Cada assinatura é uma assinatura digital de curva elíptica sobre uma carga canônica. Chave pública publicada.',
+  },
+  {
+    icone: Fingerprint,
+    titulo: 'Integridade SHA-256',
+    texto: 'Hash do original e do PDF final. Um byte alterado e a validação pública denuncia.',
+  },
+  {
+    icone: Link2,
+    titulo: 'Trilha encadeada',
+    texto:
+      'Cada evento guarda o hash do anterior, como uma blockchain privada. Apagar ou editar quebra a cadeia.',
+  },
+  {
+    icone: Lock,
+    titulo: 'Dados cifrados',
+    texto: 'CPF e segredos de MFA ficam em repouso com AES-256-GCM, cifra autenticada.',
+  },
+  {
+    icone: Building2,
+    titulo: 'Isolamento multiempresa',
+    texto:
+      'Toda query é escopada pela organização no servidor, com teste de isolamento como gate da suíte.',
+  },
+  {
+    icone: ServerCog,
+    titulo: 'Sessão blindada',
+    texto:
+      'Sessão server-side em Redis, cookie httpOnly, MFA TOTP, CSP rígida e limite de tentativas.',
+  },
 ] as const;
 
 export function Seguranca() {
@@ -270,7 +316,10 @@ export function Seguranca() {
           {PILARES.map(({ icone: Icone, titulo, texto }, indice) => (
             <Surgir key={titulo} atraso={(indice % 3) * 0.06} className="bg-superficie">
               <div className="group h-full p-7 transition hover:bg-superficie-2">
-                <Icone className="text-destaque size-7 transition group-hover:scale-110" aria-hidden="true" />
+                <Icone
+                  className="text-destaque size-7 transition group-hover:scale-110"
+                  aria-hidden="true"
+                />
                 <h3 className="text-tinta mt-5 font-bold">{titulo}</h3>
                 <p className="text-tinta-2 mt-2 text-sm leading-relaxed">{texto}</p>
               </div>
@@ -290,9 +339,14 @@ export function ValidacaoPublica() {
       <div className="mx-auto max-w-7xl px-5 lg:px-8">
         <Surgir>
           <div className="bg-noite-900 relative isolate overflow-hidden rounded-[2rem] px-8 py-14 text-white sm:px-14 lg:flex lg:items-center lg:gap-14">
-            <div aria-hidden="true" className="bg-gradiente-marca absolute -top-24 -right-24 -z-10 size-80 rounded-full opacity-40 blur-3xl" />
+            <div
+              aria-hidden="true"
+              className="bg-gradiente-marca absolute -top-24 -right-24 -z-10 size-80 rounded-full opacity-40 blur-3xl"
+            />
             <div className="lg:flex-1">
-              <p className="text-ciano-300 text-sm font-semibold tracking-wider uppercase">Validação pública</p>
+              <p className="text-ciano-300 text-sm font-semibold tracking-wider uppercase">
+                Validação pública
+              </p>
               <h2 className="mt-3 text-3xl font-extrabold sm:text-4xl">
                 Recebeu um documento? Confira se é autêntico.
               </h2>
@@ -313,7 +367,10 @@ export function ValidacaoPublica() {
                 { icone: ShieldCheck, texto: 'Selo Ed25519' },
                 { icone: Blocks, texto: 'Trilha íntegra' },
               ].map(({ icone: Icone, texto }) => (
-                <div key={texto} className="rounded-2xl border border-white/10 bg-white/5 p-5 text-center backdrop-blur">
+                <div
+                  key={texto}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-5 text-center backdrop-blur"
+                >
                   <Icone className="text-ciano-300 mx-auto size-7" aria-hidden="true" />
                   <p className="mt-3 text-sm font-medium text-white/80">{texto}</p>
                 </div>

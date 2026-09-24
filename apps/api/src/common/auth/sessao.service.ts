@@ -127,7 +127,11 @@ export class SessaoService {
   /** Derruba todas as sessões de um usuário (desativação, troca de senha). */
   async revogarTodasDo(usuarioId: number, excetoHash?: string): Promise<void> {
     const ativas = await this.prisma.db.sessao.findMany({
-      where: { usuarioId, revogadaEm: null, ...(excetoHash ? { NOT: { sessaoHash: excetoHash } } : {}) },
+      where: {
+        usuarioId,
+        revogadaEm: null,
+        ...(excetoHash ? { NOT: { sessaoHash: excetoHash } } : {}),
+      },
       select: { sessaoHash: true },
     });
 

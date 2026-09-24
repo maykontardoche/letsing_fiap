@@ -60,13 +60,17 @@ export class MeService {
   ): Promise<void> {
     const registro = await this.prisma.db.usuario.findUniqueOrThrow({ where: { id: usuario.id } });
 
-    if (registro.senhaHash === null || !(await conferirSenha(dados.senhaAtual, registro.senhaHash))) {
+    if (
+      registro.senhaHash === null ||
+      !(await conferirSenha(dados.senhaAtual, registro.senhaHash))
+    ) {
       throw new UnauthorizedException('A senha atual não confere.');
     }
 
     const problemas = problemasDaSenha(dados.novaSenha);
 
-    if (problemas.length > 0) throw new BadRequestException(`A senha precisa ${problemas.join(', ')}.`);
+    if (problemas.length > 0)
+      throw new BadRequestException(`A senha precisa ${problemas.join(', ')}.`);
 
     await this.prisma.db.usuario.update({
       where: { id: usuario.id },
@@ -104,10 +108,13 @@ export class MeService {
   ): Promise<{ codigosDeRecuperacao: string[] }> {
     const segredo = dados.sessao.segredoMfaPendente;
 
-    if (segredo === undefined) throw new BadRequestException('Comece a configuração do MFA de novo.');
+    if (segredo === undefined)
+      throw new BadRequestException('Comece a configuração do MFA de novo.');
 
     if (!this.mfa.conferirComSegredo(dados.codigo, segredo)) {
-      throw new BadRequestException('Código incorreto. Confira o relógio do celular e tente o código atual.');
+      throw new BadRequestException(
+        'Código incorreto. Confira o relógio do celular e tente o código atual.',
+      );
     }
 
     const codigos = this.mfa.gerarCodigosDeRecuperacao();
@@ -160,7 +167,11 @@ export class MeService {
   async sessoesAtivas(usuario: UsuarioAutenticado, idDaSessao: string) {
     const atual = sha256(idDaSessao);
     const sessoes = await this.prisma.db.sessao.findMany({
-      where: { usuarioId: usuario.id, revogadaEm: null, ultimaAtividadeEm: { gte: new Date(Date.now() - 8 * 3600_000) } },
+      where: {
+        usuarioId: usuario.id,
+        revogadaEm: null,
+        ultimaAtividadeEm: { gte: new Date(Date.now() - 8 * 3600_000) },
+      },
       orderBy: { ultimaAtividadeEm: 'desc' },
       take: 20,
     });
@@ -176,7 +187,9 @@ export class MeService {
   }
 
   async revogarSessao(usuario: UsuarioAutenticado, uuid: string, origem: Origem): Promise<void> {
-    const sessao = await this.prisma.db.sessao.findFirst({ where: { uuid, usuarioId: usuario.id } });
+    const sessao = await this.prisma.db.sessao.findFirst({
+      where: { uuid, usuarioId: usuario.id },
+    });
 
     if (sessao === null) throw new NotFoundException('Sessão não encontrada.');
 

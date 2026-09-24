@@ -52,7 +52,8 @@ export function paraWinAnsi(texto: string): string {
   return [...texto.normalize('NFC')]
     .map((caractere) => {
       const codigo = caractere.codePointAt(0) ?? 0;
-      const latin1Imprimivel = (codigo >= 0x20 && codigo <= 0x7e) || (codigo >= 0xa0 && codigo <= 0xff);
+      const latin1Imprimivel =
+        (codigo >= 0x20 && codigo <= 0x7e) || (codigo >= 0xa0 && codigo <= 0xff);
 
       return latin1Imprimivel || EXTRAS_WINANSI.has(caractere) ? caractere : '?';
     })
@@ -81,7 +82,10 @@ interface Fontes {
  *    (anexo PDF/A-3 style): as cargas canônicas, as assinaturas Ed25519 e a chave
  *    pública. O arquivo se auto-verifica, mesmo que o LetsSign deixe de existir.
  */
-export async function montarPdfAssinado(original: Uint8Array, dados: DadosDoManifesto): Promise<Uint8Array> {
+export async function montarPdfAssinado(
+  original: Uint8Array,
+  dados: DadosDoManifesto,
+): Promise<Uint8Array> {
   const pdf = await PDFDocument.load(original);
   const fontes: Fontes = {
     normal: await pdf.embedFont(StandardFonts.Helvetica),
@@ -143,7 +147,12 @@ async function desenharManifesto(
   let y = A4.altura - 120;
 
   // ---- Bloco do documento + QR ----
-  const texto = (conteudo: string, x: number, altura: number, opcoes: { fonte?: PDFFont; tamanho?: number; cor?: ReturnType<typeof rgb> } = {}) =>
+  const texto = (
+    conteudo: string,
+    x: number,
+    altura: number,
+    opcoes: { fonte?: PDFFont; tamanho?: number; cor?: ReturnType<typeof rgb> } = {},
+  ) =>
     pagina.drawText(paraWinAnsi(conteudo), {
       x,
       y: altura,
@@ -152,9 +161,20 @@ async function desenharManifesto(
       color: opcoes.cor ?? COR_TINTA,
     });
 
-  pagina.drawRectangle({ x: MARGEM, y: y - 150, width: A4.largura - MARGEM * 2, height: 160, color: COR_FUNDO, borderColor: COR_LINHA, borderWidth: 1 });
+  pagina.drawRectangle({
+    x: MARGEM,
+    y: y - 150,
+    width: A4.largura - MARGEM * 2,
+    height: 160,
+    color: COR_FUNDO,
+    borderColor: COR_LINHA,
+    borderWidth: 1,
+  });
   texto('DOCUMENTO', MARGEM + 18, y - 14, { fonte: fontes.negrito, tamanho: 7.5, cor: COR_SUAVE });
-  texto(truncarParaLargura(dados.titulo, fontes.negrito, 13, 330), MARGEM + 18, y - 32, { fonte: fontes.negrito, tamanho: 13 });
+  texto(truncarParaLargura(dados.titulo, fontes.negrito, 13, 330), MARGEM + 18, y - 32, {
+    fonte: fontes.negrito,
+    tamanho: 13,
+  });
 
   const linhas: [string, string][] = [
     ['Código de validação', dados.codigo],
@@ -169,18 +189,31 @@ async function desenharManifesto(
     const altura = y - 54 - indice * 14;
 
     texto(rotulo, MARGEM + 18, altura, { tamanho: 8.5, cor: COR_SUAVE });
-    texto(truncarParaLargura(valor, fontes.normal, 8.5, 220), MARGEM + 120, altura, { tamanho: 8.5 });
+    texto(truncarParaLargura(valor, fontes.normal, 8.5, 220), MARGEM + 120, altura, {
+      tamanho: 8.5,
+    });
   });
 
   pagina.drawImage(qr, { x: A4.largura - MARGEM - 128, y: y - 138, width: 112, height: 112 });
-  texto('Escaneie para validar', A4.largura - MARGEM - 124, y - 146, { tamanho: 7, cor: COR_SUAVE });
+  texto('Escaneie para validar', A4.largura - MARGEM - 124, y - 146, {
+    tamanho: 7,
+    cor: COR_SUAVE,
+  });
 
   y -= 174;
-  texto('HASH SHA-256 DO ORIGINAL', MARGEM, y, { fonte: fontes.negrito, tamanho: 7.5, cor: COR_SUAVE });
+  texto('HASH SHA-256 DO ORIGINAL', MARGEM, y, {
+    fonte: fontes.negrito,
+    tamanho: 7.5,
+    cor: COR_SUAVE,
+  });
   texto(dados.hashOriginal, MARGEM, y - 13, { fonte: fontes.mono, tamanho: 8.2, cor: COR_MARCA });
 
   y -= 44;
-  texto(`ASSINATURAS (${dados.signatarios.length})`, MARGEM, y, { fonte: fontes.negrito, tamanho: 7.5, cor: COR_SUAVE });
+  texto(`ASSINATURAS (${dados.signatarios.length})`, MARGEM, y, {
+    fonte: fontes.negrito,
+    tamanho: 7.5,
+    cor: COR_SUAVE,
+  });
   y -= 12;
 
   for (const signatario of dados.signatarios) {
@@ -204,15 +237,36 @@ async function desenharCartaoDeSignatario(
   base: number,
 ): Promise<void> {
   const largura = A4.largura - MARGEM * 2;
-  const texto = (conteudo: string, x: number, y: number, fonte: PDFFont = fontes.normal, tamanho = 8.5, cor = COR_SECUNDARIA) =>
-    pagina.drawText(paraWinAnsi(conteudo), { x, y, size: tamanho, font: fonte, color: cor });
+  const texto = (
+    conteudo: string,
+    x: number,
+    y: number,
+    fonte: PDFFont = fontes.normal,
+    tamanho = 8.5,
+    cor = COR_SECUNDARIA,
+  ) => pagina.drawText(paraWinAnsi(conteudo), { x, y, size: tamanho, font: fonte, color: cor });
 
-  pagina.drawRectangle({ x: MARGEM, y: base, width: largura, height: 112, borderColor: COR_LINHA, borderWidth: 1, color: rgb(1, 1, 1) });
+  pagina.drawRectangle({
+    x: MARGEM,
+    y: base,
+    width: largura,
+    height: 112,
+    borderColor: COR_LINHA,
+    borderWidth: 1,
+    color: rgb(1, 1, 1),
+  });
   pagina.drawRectangle({ x: MARGEM, y: base, width: 3, height: 112, color: COR_SUCESSO });
 
   const topo = base + 112;
 
-  texto(truncarParaLargura(signatario.nome, fontes.negrito, 11, 280), MARGEM + 16, topo - 22, fontes.negrito, 11, COR_TINTA);
+  texto(
+    truncarParaLargura(signatario.nome, fontes.negrito, 11, 280),
+    MARGEM + 16,
+    topo - 22,
+    fontes.negrito,
+    11,
+    COR_TINTA,
+  );
   texto('ASSINADO', MARGEM + largura - 70, topo - 21, fontes.negrito, 7.5, COR_SUCESSO);
 
   const detalhes = [
@@ -222,9 +276,22 @@ async function desenharCartaoDeSignatario(
   ];
 
   detalhes.forEach((linha, indice) =>
-    texto(truncarParaLargura(linha, fontes.normal, 8.2, 300), MARGEM + 16, topo - 40 - indice * 13, fontes.normal, 8.2),
+    texto(
+      truncarParaLargura(linha, fontes.normal, 8.2, 300),
+      MARGEM + 16,
+      topo - 40 - indice * 13,
+      fontes.normal,
+      8.2,
+    ),
   );
-  texto(`Assinatura digital Ed25519 · id ${signatario.idDaAssinatura}`, MARGEM + 16, base + 12, fontes.mono, 7, COR_MARCA);
+  texto(
+    `Assinatura digital Ed25519 · id ${signatario.idDaAssinatura}`,
+    MARGEM + 16,
+    base + 12,
+    fontes.mono,
+    7,
+    COR_MARCA,
+  );
 
   if (signatario.imagemPng !== null) {
     try {
@@ -253,8 +320,20 @@ async function desenharCartaoDeSignatario(
 function novaPaginaDoManifesto(pdf: PDFDocument, fontes: Fontes, dados: DadosDoManifesto): PDFPage {
   const pagina = pdf.addPage([A4.largura, A4.altura]);
 
-  pagina.drawRectangle({ x: 0, y: A4.altura - 86, width: A4.largura, height: 86, color: COR_MARCA });
-  pagina.drawText('LetsSign', { x: MARGEM, y: A4.altura - 40, size: 16, font: fontes.negrito, color: rgb(1, 1, 1) });
+  pagina.drawRectangle({
+    x: 0,
+    y: A4.altura - 86,
+    width: A4.largura,
+    height: 86,
+    color: COR_MARCA,
+  });
+  pagina.drawText('LetsSign', {
+    x: MARGEM,
+    y: A4.altura - 40,
+    size: 16,
+    font: fontes.negrito,
+    color: rgb(1, 1, 1),
+  });
   pagina.drawText('Manifesto de assinaturas eletrônicas', {
     x: MARGEM,
     y: A4.altura - 62,
@@ -289,7 +368,12 @@ function novaPaginaDoManifesto(pdf: PDFDocument, fontes: Fontes, dados: DadosDoM
   return pagina;
 }
 
-function truncarParaLargura(texto: string, fonte: PDFFont, tamanho: number, largura: number): string {
+function truncarParaLargura(
+  texto: string,
+  fonte: PDFFont,
+  tamanho: number,
+  largura: number,
+): string {
   const limpo = paraWinAnsi(texto);
 
   if (fonte.widthOfTextAtSize(limpo, tamanho) <= largura) return limpo;

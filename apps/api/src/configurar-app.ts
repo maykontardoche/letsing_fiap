@@ -1,4 +1,9 @@
-import { BadRequestException, ValidationPipe, type INestApplication, type ValidationError } from '@nestjs/common';
+import {
+  BadRequestException,
+  ValidationPipe,
+  type INestApplication,
+  type ValidationError,
+} from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
@@ -78,7 +83,9 @@ export function mensagensDeValidacao(erros: ValidationError[], prefixo = ''): st
   return erros.flatMap((erro) => {
     const campo = `${prefixo}${erro.property}`;
     const proprias = Object.entries(erro.constraints ?? {}).map(([regra, mensagem]) =>
-      regra === 'whitelistValidation' ? `O campo "${campo}" não é permitido.` : traduzir(mensagem, campo),
+      regra === 'whitelistValidation'
+        ? `O campo "${campo}" não é permitido.`
+        : traduzir(mensagem, campo),
     );
 
     return [...proprias, ...mensagensDeValidacao(erro.children ?? [], `${campo}.`)];

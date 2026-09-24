@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, KeyRound, Lock, Mail, MailCheck, ShieldCheck } from 'lucide-react';
@@ -18,7 +18,9 @@ export function EsqueciSenhaPage() {
   const [enviadoPara, definirEnviadoPara] = useState<string | null>(null);
   const [erro, definirErro] = useState<string | null>(null);
   const formulario = useForm<{ email: string }>({
-    resolver: zodResolver(z.object({ email: z.string().trim().email('Informe um e-mail válido.') })),
+    resolver: zodResolver(
+      z.object({ email: z.string().trim().email('Informe um e-mail válido.') }),
+    ),
     defaultValues: { email: '' },
   });
 
@@ -42,8 +44,8 @@ export function EsqueciSenhaPage() {
           </span>
           {/* ⚠️ Mesma resposta exista ou não a conta: a tela não confirma quais e-mails têm cadastro. */}
           <p className="text-tinta-2 mt-6">
-            Se houver uma conta para <strong className="text-tinta">{enviadoPara}</strong>, enviamos um link para
-            criar uma nova senha. Ele vale por 1 hora.
+            Se houver uma conta para <strong className="text-tinta">{enviadoPara}</strong>, enviamos
+            um link para criar uma nova senha. Ele vale por 1 hora.
           </p>
           <Link to="/entrar" className={`${estilosDeBotao('secundario', 'lg')} mt-8 w-full`}>
             Voltar para entrar
@@ -58,7 +60,10 @@ export function EsqueciSenhaPage() {
       titulo="Esqueceu a senha?"
       subtitulo="Informe o e-mail da conta. Enviaremos um link para criar uma nova."
       rodape={
-        <Link to="/entrar" className="text-destaque inline-flex items-center gap-1.5 font-semibold hover:underline">
+        <Link
+          to="/entrar"
+          className="text-destaque inline-flex items-center gap-1.5 font-semibold hover:underline"
+        >
           <ArrowLeft className="size-4" aria-hidden="true" /> Voltar para entrar
         </Link>
       }
@@ -66,9 +71,20 @@ export function EsqueciSenhaPage() {
       <form onSubmit={(e) => void enviar(e)} noValidate className="space-y-5">
         {erro && <Alerta tom="perigo">{erro}</Alerta>}
         <Campo rotulo="E-mail" erro={formulario.formState.errors.email?.message}>
-          <Entrada type="email" autoComplete="email" placeholder="voce@empresa.com.br" icone={<Mail />} {...formulario.register('email')} />
+          <Entrada
+            type="email"
+            autoComplete="email"
+            placeholder="voce@empresa.com.br"
+            icone={<Mail />}
+            {...formulario.register('email')}
+          />
         </Campo>
-        <Botao type="submit" tamanho="lg" className="w-full" carregando={formulario.formState.isSubmitting}>
+        <Botao
+          type="submit"
+          tamanho="lg"
+          className="w-full"
+          carregando={formulario.formState.isSubmitting}
+        >
           Enviar link
         </Botao>
       </form>
@@ -78,10 +94,15 @@ export function EsqueciSenhaPage() {
 
 const esquemaDaNovaSenha = z
   .object({
-    senha: z.string().refine(senhaAtendeRequisitos, 'A senha ainda não atende a todos os requisitos.'),
+    senha: z
+      .string()
+      .refine(senhaAtendeRequisitos, 'A senha ainda não atende a todos os requisitos.'),
     confirmacao: z.string(),
   })
-  .refine((d) => d.senha === d.confirmacao, { path: ['confirmacao'], message: 'As senhas não conferem.' });
+  .refine((d) => d.senha === d.confirmacao, {
+    path: ['confirmacao'],
+    message: 'As senhas não conferem.',
+  });
 
 /** Serve à redefinição **e** ao aceite de convite de equipe — os dois definem senha por token. */
 export function RedefinirSenhaPage() {
@@ -94,6 +115,7 @@ export function RedefinirSenhaPage() {
     resolver: zodResolver(esquemaDaNovaSenha),
     defaultValues: { senha: '', confirmacao: '' },
   });
+  const senha = useWatch({ control: formulario.control, name: 'senha' });
 
   const enviar = formulario.handleSubmit(async ({ senha }) => {
     definirErro(null);
@@ -139,23 +161,43 @@ export function RedefinirSenhaPage() {
     );
   }
 
-  const senha = formulario.watch('senha');
-
   return (
     <MolduraDeAutenticacao
       titulo={ehConvite ? 'Aceite o convite' : 'Crie uma nova senha'}
-      subtitulo={ehConvite ? 'Defina a senha da sua conta para entrar na equipe.' : 'Escolha uma senha que você não use em outro lugar.'}
+      subtitulo={
+        ehConvite
+          ? 'Defina a senha da sua conta para entrar na equipe.'
+          : 'Escolha uma senha que você não use em outro lugar.'
+      }
     >
       <form onSubmit={(e) => void enviar(e)} noValidate className="space-y-5">
         {erro && <Alerta tom="perigo">{erro}</Alerta>}
         <Campo rotulo="Nova senha" erro={formulario.formState.errors.senha?.message}>
-          <Entrada type="password" autoComplete="new-password" icone={<Lock />} {...formulario.register('senha')} />
+          <Entrada
+            type="password"
+            autoComplete="new-password"
+            icone={<Lock />}
+            {...formulario.register('senha')}
+          />
         </Campo>
         <ForcaDaSenha senha={senha} />
-        <Campo rotulo="Confirme a nova senha" erro={formulario.formState.errors.confirmacao?.message}>
-          <Entrada type="password" autoComplete="new-password" icone={<Lock />} {...formulario.register('confirmacao')} />
+        <Campo
+          rotulo="Confirme a nova senha"
+          erro={formulario.formState.errors.confirmacao?.message}
+        >
+          <Entrada
+            type="password"
+            autoComplete="new-password"
+            icone={<Lock />}
+            {...formulario.register('confirmacao')}
+          />
         </Campo>
-        <Botao type="submit" tamanho="lg" className="w-full" carregando={formulario.formState.isSubmitting}>
+        <Botao
+          type="submit"
+          tamanho="lg"
+          className="w-full"
+          carregando={formulario.formState.isSubmitting}
+        >
           {ehConvite ? 'Definir senha e continuar' : 'Salvar nova senha'}
         </Botao>
       </form>
@@ -177,7 +219,7 @@ export function MfaPage() {
     try {
       await apiDeSessao.desafioMfa(codigo.trim());
       await recarregar();
-      navegar(destinoSeguro(parametros.get('voltar')), { replace: true });
+      void navegar(destinoSeguro(parametros.get('voltar')), { replace: true });
     } catch (causa) {
       definirErro(mensagemDoErro(causa));
       formulario.setValue('codigo', '');
@@ -193,7 +235,11 @@ export function MfaPage() {
           : 'Abra o app autenticador e digite o código de 6 dígitos do LetsSign.'
       }
       rodape={
-        <button type="button" onClick={() => void sair().then(() => navegar('/entrar'))} className="text-destaque font-semibold hover:underline">
+        <button
+          type="button"
+          onClick={() => void sair().then(() => navegar('/entrar'))}
+          className="text-destaque font-semibold hover:underline"
+        >
           Entrar com outra conta
         </button>
       }
@@ -211,7 +257,12 @@ export function MfaPage() {
             {...formulario.register('codigo', { required: true })}
           />
         </Campo>
-        <Botao type="submit" tamanho="lg" className="w-full" carregando={formulario.formState.isSubmitting}>
+        <Botao
+          type="submit"
+          tamanho="lg"
+          className="w-full"
+          carregando={formulario.formState.isSubmitting}
+        >
           Confirmar
         </Botao>
         <button
@@ -222,7 +273,9 @@ export function MfaPage() {
           }}
           className="text-tinta-2 hover:text-tinta w-full text-center text-sm font-medium"
         >
-          {usarRecuperacao ? 'Usar o código do app' : 'Perdi o celular — usar código de recuperação'}
+          {usarRecuperacao
+            ? 'Usar o código do app'
+            : 'Perdi o celular — usar código de recuperação'}
         </button>
       </form>
     </MolduraDeAutenticacao>

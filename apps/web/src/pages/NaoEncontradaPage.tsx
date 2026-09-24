@@ -17,11 +17,17 @@ export function NaoEncontradaPage() {
       <div>
         <p className="font-display text-tinta-3 text-sm font-bold tracking-widest">ERRO 404</p>
         <h1 className="text-tinta mt-2 text-3xl font-extrabold">Esta página não existe</h1>
-        <p className="text-tinta-2 mt-2 max-w-md">O endereço pode ter sido digitado errado ou o conteúdo mudou de lugar.</p>
+        <p className="text-tinta-2 mt-2 max-w-md">
+          O endereço pode ter sido digitado errado ou o conteúdo mudou de lugar.
+        </p>
       </div>
       <div className="flex gap-2">
-        <Link to="/" className={estilosDeBotao('secundario')}>Início</Link>
-        <Link to="/app" className={estilosDeBotao('primario')}>Ir para o painel</Link>
+        <Link to="/" className={estilosDeBotao('secundario')}>
+          Início
+        </Link>
+        <Link to="/app" className={estilosDeBotao('primario')}>
+          Ir para o painel
+        </Link>
       </div>
     </div>
   );

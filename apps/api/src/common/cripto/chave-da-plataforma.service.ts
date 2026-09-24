@@ -25,7 +25,8 @@ export class ChaveDaPlataformaService implements OnModuleInit {
   }
 
   get assinador(): AssinadorEd25519 {
-    if (this.assinadorCarregado === null) throw new Error('Chave da plataforma ainda não carregada.');
+    if (this.assinadorCarregado === null)
+      throw new Error('Chave da plataforma ainda não carregada.');
 
     return this.assinadorCarregado;
   }

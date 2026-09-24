@@ -12,7 +12,11 @@ import {
   Req,
 } from '@nestjs/common';
 import { OrigemDaRequisicao, UsuarioAtual } from '../../common/auth/decorators';
-import type { Origem, RequisicaoAutenticada, UsuarioAutenticado } from '../../common/auth/requisicao';
+import type {
+  Origem,
+  RequisicaoAutenticada,
+  UsuarioAutenticado,
+} from '../../common/auth/requisicao';
 import type { DadosDaSessao } from '../../common/auth/sessao.service';
 import { AtualizarPerfilDto, CodigoMfaDto, DesativarMfaDto, TrocarSenhaDto } from './me.dto';
 import { MeService } from './me.service';
@@ -53,8 +57,15 @@ export class MeController {
   }
 
   @Post('mfa/iniciar')
-  iniciarMfa(@UsuarioAtual() usuario: UsuarioAutenticado, @Req() requisicao: RequisicaoAutenticada) {
-    return this.servico.iniciarMfa(usuario, requisicao.idDaSessao as string, requisicao.sessao as DadosDaSessao);
+  iniciarMfa(
+    @UsuarioAtual() usuario: UsuarioAutenticado,
+    @Req() requisicao: RequisicaoAutenticada,
+  ) {
+    return this.servico.iniciarMfa(
+      usuario,
+      requisicao.idDaSessao as string,
+      requisicao.sessao as DadosDaSessao,
+    );
   }
 
   @Post('mfa/confirmar')
@@ -66,7 +77,11 @@ export class MeController {
   ) {
     return this.servico.confirmarMfa(
       usuario,
-      { codigo: dto.codigo, idDaSessao: requisicao.idDaSessao as string, sessao: requisicao.sessao as DadosDaSessao },
+      {
+        codigo: dto.codigo,
+        idDaSessao: requisicao.idDaSessao as string,
+        sessao: requisicao.sessao as DadosDaSessao,
+      },
       origem,
     );
   }

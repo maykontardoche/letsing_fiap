@@ -98,7 +98,8 @@ export class AuditoriaService {
       acao: entrada.acao,
       resumo: truncar(entrada.resumo, 500),
       // Normaliza pelo JSON: o que o hash cobre é exatamente o que o banco devolve.
-      dados: entrada.dados === undefined ? null : (JSON.parse(JSON.stringify(entrada.dados)) as unknown),
+      dados:
+        entrada.dados === undefined ? null : (JSON.parse(JSON.stringify(entrada.dados)) as unknown),
       // Milissegundos: é a precisão do `timestamp(3)` do Postgres.
       criadoEm: new Date(Math.floor((entrada.em ?? new Date()).getTime())),
     };

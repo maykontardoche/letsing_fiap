@@ -1,6 +1,11 @@
 import { createParamDecorator, SetMetadata, type ExecutionContext } from '@nestjs/common';
 import type { Permissao } from './permissoes';
-import { origemDa, type Origem, type RequisicaoAutenticada, type UsuarioAutenticado } from './requisicao';
+import {
+  origemDa,
+  type Origem,
+  type RequisicaoAutenticada,
+  type UsuarioAutenticado,
+} from './requisicao';
 
 export const CHAVE_PUBLICO = 'rota-publica';
 export const CHAVE_PERMISSOES = 'permissoes-exigidas';

@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Camera, CheckCircle2, Eye, Loader2, RefreshCw, ScanFace, ShieldCheck } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Camera,
+  CheckCircle2,
+  Eye,
+  Loader2,
+  RefreshCw,
+  ScanFace,
+  ShieldCheck,
+} from 'lucide-react';
 import { Botao } from '@/components/ui/Botao';
 import { Alerta } from '@/components/ui/Estados';
 import type { AcaoDeVivacidade, ApiDeAssinatura } from '@/lib/api/assinatura';
@@ -40,17 +50,28 @@ function ear(olho: readonly Ponto[]): number {
  * para a direita da imagem — o valor sobe.
  */
 function giro(pontos: readonly Ponto[]): number {
-  const bordaA = pontos[0] as Ponto;
-  const bordaB = pontos[16] as Ponto;
-  const nariz = pontos[30] as Ponto;
+  const bordaA = pontos[0];
+  const bordaB = pontos[16];
+  const nariz = pontos[30];
 
   return (nariz.x - bordaA.x) / (bordaB.x - bordaA.x);
 }
 
 type Fase = 'inicio' | 'preparando' | 'verificando' | 'enviando' | 'aprovada' | 'erro';
 
-export function VerificacaoFacial({ api, aoAprovar }: { readonly api: ApiDeAssinatura; readonly aoAprovar: () => void }) {
-  const camera = useCamera();
+export function VerificacaoFacial({
+  api,
+  aoAprovar,
+}: {
+  readonly api: ApiDeAssinatura;
+  readonly aoAprovar: () => void;
+}) {
+  const {
+    video: refDoVideo,
+    estado: estadoDaCamera,
+    ligar: ligarCamera,
+    desligar: desligarCamera,
+  } = useCamera();
   const [fase, definirFase] = useState<Fase>('inicio');
   const [erro, definirErro] = useState<string | null>(null);
   const [acoes, definirAcoes] = useState<AcaoDeVivacidade[]>([]);
@@ -67,11 +88,17 @@ export function VerificacaoFacial({ api, aoAprovar }: { readonly api: ApiDeAssin
     definirIndice(0);
 
     try {
-      const [desafio, faceapi] = await Promise.all([api.iniciarFacial(), import('@vladmandic/face-api')]);
+      const [desafio, faceapi] = await Promise.all([
+        api.iniciarFacial(),
+        import('@vladmandic/face-api'),
+      ]);
 
-      await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODELOS), faceapi.nets.faceLandmark68Net.loadFromUri(MODELOS)]);
+      await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(MODELOS),
+        faceapi.nets.faceLandmark68Net.loadFromUri(MODELOS),
+      ]);
 
-      if (!(await camera.ligar())) {
+      if (!(await ligarCamera())) {
         definirFase('erro');
         return;
       }
@@ -83,7 +110,7 @@ export function VerificacaoFacial({ api, aoAprovar }: { readonly api: ApiDeAssin
       const medicao = await analisar(faceapi, desafio.acoes);
 
       ativo.current = false;
-      camera.desligar();
+      desligarCamera();
 
       if (medicao === null) return;
 
@@ -93,15 +120,18 @@ export function VerificacaoFacial({ api, aoAprovar }: { readonly api: ApiDeAssin
       window.setTimeout(aoAprovar, 900);
     } catch (causa) {
       ativo.current = false;
-      camera.desligar();
+      desligarCamera();
       definirErro(mensagemDoErro(causa));
       definirFase('erro');
     }
   };
 
   /** O laço de análise. Devolve a medição quando todas as ações são cumpridas. */
-  const analisar = async (faceapi: typeof import('@vladmandic/face-api'), pedidas: AcaoDeVivacidade[]) => {
-    const video = camera.video.current as HTMLVideoElement;
+  const analisar = async (
+    faceapi: typeof import('@vladmandic/face-api'),
+    pedidas: AcaoDeVivacidade[],
+  ) => {
+    const video = refDoVideo.current as HTMLVideoElement;
     const opcoes = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.45 });
     const inicio = Date.now();
     const cumpridas: AcaoDeVivacidade[] = [];
@@ -116,7 +146,9 @@ export function VerificacaoFacial({ api, aoAprovar }: { readonly api: ApiDeAssin
 
     while (ativo.current && cumpridas.length < pedidas.length) {
       if (Date.now() - inicio > TEMPO_LIMITE_MS) {
-        definirErro('O tempo acabou antes de concluir as ações. Procure um lugar bem iluminado e tente de novo.');
+        definirErro(
+          'O tempo acabou antes de concluir as ações. Procure um lugar bem iluminado e tente de novo.',
+        );
         definirFase('erro');
         return null;
       }
@@ -139,7 +171,7 @@ export function VerificacaoFacial({ api, aoAprovar }: { readonly api: ApiDeAssin
         const pontos = unica.landmarks.positions;
         const abertura = (ear(pontos.slice(36, 42)) + ear(pontos.slice(42, 48))) / 2;
         const posicao = giro(pontos);
-        const acao = pedidas[cumpridas.length] as AcaoDeVivacidade;
+        const acao = pedidas[cumpridas.length];
 
         earAberto = Math.max(earAberto * 0.98, abertura);
 
@@ -196,23 +228,51 @@ export function VerificacaoFacial({ api, aoAprovar }: { readonly api: ApiDeAssin
     <div className="space-y-5">
       <div className="bg-noite-900 relative mx-auto aspect-[4/3] w-full max-w-lg overflow-hidden rounded-3xl">
         {/* Espelhado só na exibição — a análise usa a imagem crua. */}
-        <video ref={camera.video} muted playsInline className={cn('size-full -scale-x-100 object-cover transition-opacity', fase === 'verificando' ? 'opacity-100' : 'opacity-0')} />
+        <video
+          ref={refDoVideo}
+          muted
+          playsInline
+          className={cn(
+            'size-full -scale-x-100 object-cover transition-opacity',
+            fase === 'verificando' ? 'opacity-100' : 'opacity-0',
+          )}
+        />
 
         {fase === 'verificando' && (
           <>
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className={cn('h-[72%] w-[52%] rounded-[50%] border-4 transition-colors duration-300', rostoVisivel ? 'border-emerald-400 shadow-[0_0_0_9999px_rgba(5,7,15,0.45)]' : 'border-white/50 shadow-[0_0_0_9999px_rgba(5,7,15,0.6)]')} />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 flex items-center justify-center"
+            >
+              <div
+                className={cn(
+                  'h-[72%] w-[52%] rounded-[50%] border-4 transition-colors duration-300',
+                  rostoVisivel
+                    ? 'border-emerald-400 shadow-[0_0_0_9999px_rgba(5,7,15,0.45)]'
+                    : 'border-white/50 shadow-[0_0_0_9999px_rgba(5,7,15,0.6)]',
+                )}
+              />
             </div>
             <div className="absolute inset-x-0 top-0 flex justify-between p-3 text-xs font-semibold text-white">
-              <span className={cn('rounded-full px-2.5 py-1 backdrop-blur', rostoVisivel ? 'bg-emerald-500/70' : 'bg-black/50')}>
-                {rostoVisivel ? `Rosto detectado · ${Math.round(confianca * 100)}%` : 'Posicione o rosto no oval'}
+              <span
+                className={cn(
+                  'rounded-full px-2.5 py-1 backdrop-blur',
+                  rostoVisivel ? 'bg-emerald-500/70' : 'bg-black/50',
+                )}
+              >
+                {rostoVisivel
+                  ? `Rosto detectado · ${Math.round(confianca * 100)}%`
+                  : 'Posicione o rosto no oval'}
               </span>
               <span className="rounded-full bg-black/50 px-2.5 py-1 backdrop-blur">
                 {Math.min(indice + 1, acoes.length)}/{acoes.length}
               </span>
             </div>
             {acaoAtual && (
-              <div className="absolute inset-x-4 bottom-4 flex items-center justify-center gap-3 rounded-2xl bg-black/60 px-4 py-3 text-white backdrop-blur" aria-live="assertive">
+              <div
+                className="absolute inset-x-4 bottom-4 flex items-center justify-center gap-3 rounded-2xl bg-black/60 px-4 py-3 text-white backdrop-blur"
+                aria-live="assertive"
+              >
                 {(() => {
                   const { texto, icone: Icone } = ACOES[acaoAtual];
 
@@ -235,13 +295,20 @@ export function VerificacaoFacial({ api, aoAprovar }: { readonly api: ApiDeAssin
                 <span className="bg-gradiente-marca flex size-20 items-center justify-center rounded-3xl shadow-brilho">
                   <ScanFace className="size-10" aria-hidden="true" />
                 </span>
-                <p className="max-w-xs text-sm text-white/75">Vamos pedir duas ações aleatórias para provar que é você, ao vivo, na frente da câmera.</p>
+                <p className="max-w-xs text-sm text-white/75">
+                  Vamos pedir duas ações aleatórias para provar que é você, ao vivo, na frente da
+                  câmera.
+                </p>
               </>
             )}
             {(fase === 'preparando' || fase === 'enviando') && (
               <>
                 <Loader2 className="size-10 animate-spin text-brand-300" aria-hidden="true" />
-                <p className="text-sm text-white/75">{fase === 'preparando' ? 'Carregando o reconhecimento facial…' : 'Registrando a verificação…'}</p>
+                <p className="text-sm text-white/75">
+                  {fase === 'preparando'
+                    ? 'Carregando o reconhecimento facial…'
+                    : 'Registrando a verificação…'}
+                </p>
               </>
             )}
             {fase === 'aprovada' && (
@@ -256,15 +323,24 @@ export function VerificacaoFacial({ api, aoAprovar }: { readonly api: ApiDeAssin
       </div>
 
       {erro && <Alerta tom="perigo">{erro}</Alerta>}
-      {(camera.estado === 'negada' || camera.estado === 'indisponivel') && <Alerta tom="alerta">{MENSAGEM_DA_CAMERA[camera.estado]}</Alerta>}
+      {(estadoDaCamera === 'negada' || estadoDaCamera === 'indisponivel') && (
+        <Alerta tom="alerta">{MENSAGEM_DA_CAMERA[estadoDaCamera]}</Alerta>
+      )}
 
       {(fase === 'inicio' || fase === 'erro') && (
         <div className="flex flex-col items-center gap-3">
-          <Botao tamanho="lg" icone={fase === 'erro' ? <RefreshCw className="size-4" /> : <Camera className="size-4" />} onClick={() => void comecar()}>
+          <Botao
+            tamanho="lg"
+            icone={
+              fase === 'erro' ? <RefreshCw className="size-4" /> : <Camera className="size-4" />
+            }
+            onClick={() => void comecar()}
+          >
             {fase === 'erro' ? 'Tentar de novo' : 'Ligar a câmera e começar'}
           </Botao>
           <p className="text-tinta-3 flex items-center gap-1.5 text-center text-xs">
-            <ShieldCheck className="size-3.5" aria-hidden="true" /> A análise acontece no seu dispositivo. Nenhuma imagem é enviada ou guardada.
+            <ShieldCheck className="size-3.5" aria-hidden="true" /> A análise acontece no seu
+            dispositivo. Nenhuma imagem é enviada ou guardada.
           </p>
         </div>
       )}

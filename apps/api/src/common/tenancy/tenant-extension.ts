@@ -46,9 +46,7 @@ type Argumentos = Record<string, unknown>;
  * Funciona porque o Prisma aceita campos não-únicos no `where` de `findUnique`,
  * `update` e `delete` desde que haja um identificador único junto.
  */
-export function criarExtensaoDeOrganizacao(
-  lerOrganizacao: () => number | null = organizacaoAtual,
-) {
+export function criarExtensaoDeOrganizacao(lerOrganizacao: () => number | null = organizacaoAtual) {
   return Prisma.defineExtension({
     name: 'escopo-de-organizacao',
     query: {
@@ -60,7 +58,7 @@ export function criarExtensaoDeOrganizacao(
             return query(args);
           }
 
-          return query(aplicarEscopo(operation, args as Argumentos, organizacaoId));
+          return query(aplicarEscopo(operation, args, organizacaoId));
         },
       },
     },
@@ -78,7 +76,11 @@ function nomeDoModelo(model: string | undefined): string | undefined {
  * A transformação pura dos argumentos — exportada para ser testável sem banco:
  * é aqui que mora a decisão de isolamento.
  */
-export function aplicarEscopo(operation: string, args: Argumentos, organizacaoId: number): Argumentos {
+export function aplicarEscopo(
+  operation: string,
+  args: Argumentos,
+  organizacaoId: number,
+): Argumentos {
   if (OPERACOES_COM_WHERE.has(operation)) {
     return { ...args, where: { ...(args.where as Argumentos | undefined), organizacaoId } };
   }

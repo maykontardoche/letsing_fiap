@@ -29,14 +29,27 @@ import { Alerta, Carregando, EstadoDeErro, Esqueleto } from '@/components/ui/Est
 import { EtiquetaDoDocumento, EtiquetaDoSignatario } from '@/components/ui/EtiquetaDeStatus';
 import { Modal } from '@/components/ui/Modal';
 import { NIVEIS, VERIFICACAO } from '@/constants/status';
-import { apiDeDocumentos, type DetalheDoDocumento, type SignatarioDoDetalhe } from '@/lib/api/documentos';
+import {
+  apiDeDocumentos,
+  type DetalheDoDocumento,
+  type SignatarioDoDetalhe,
+} from '@/lib/api/documentos';
 import { mensagemDoErro } from '@/lib/erros';
 import { cn } from '@/lib/cn';
-import { formatarBytes, formatarDataHora, formatarDataHoraLonga, formatarRelativo } from '@/lib/formatadores';
+import {
+  formatarBytes,
+  formatarDataHora,
+  formatarDataHoraLonga,
+  formatarRelativo,
+} from '@/lib/formatadores';
 
 export function DetalheDoDocumentoPage() {
   const { uuid = '' } = useParams();
-  const consulta = useQuery({ queryKey: ['documento', uuid], queryFn: () => apiDeDocumentos.detalhe(uuid), refetchInterval: (q) => (q.state.data?.status === 'em_andamento' ? 15_000 : false) });
+  const consulta = useQuery({
+    queryKey: ['documento', uuid],
+    queryFn: () => apiDeDocumentos.detalhe(uuid),
+    refetchInterval: (q) => (q.state.data?.status === 'em_andamento' ? 15_000 : false),
+  });
 
   if (consulta.isPending) {
     return (
@@ -51,7 +64,12 @@ export function DetalheDoDocumentoPage() {
     );
   }
 
-  if (consulta.isError) return <Cartao><EstadoDeErro erro={consulta.error} aoTentarDeNovo={() => void consulta.refetch()} /></Cartao>;
+  if (consulta.isError)
+    return (
+      <Cartao>
+        <EstadoDeErro erro={consulta.error} aoTentarDeNovo={() => void consulta.refetch()} />
+      </Cartao>
+    );
 
   return <Conteudo documento={consulta.data} />;
 }
@@ -61,10 +79,16 @@ function Conteudo({ documento }: { readonly documento: DetalheDoDocumento }) {
   const confirmar = useConfirmacao();
   const clienteDeQuery = useQueryClient();
   const [cancelando, definirCancelando] = useState(false);
-  const [versao, definirVersao] = useState<'original' | 'assinado'>(documento.hashAssinado ? 'assinado' : 'original');
+  const [versao, definirVersao] = useState<'original' | 'assinado'>(
+    documento.hashAssinado ? 'assinado' : 'original',
+  );
 
   const atualizar = async () => {
-    await Promise.all(['documento', 'documentos', 'painel'].map((chave) => clienteDeQuery.invalidateQueries({ queryKey: [chave] })));
+    await Promise.all(
+      ['documento', 'documentos', 'painel'].map((chave) =>
+        clienteDeQuery.invalidateQueries({ queryKey: [chave] }),
+      ),
+    );
   };
 
   const assinarAgora = useMutation({
@@ -78,7 +102,7 @@ function Conteudo({ documento }: { readonly documento: DetalheDoDocumento }) {
     onSuccess: async () => {
       await atualizar();
       toast.success('Rascunho excluído.');
-      navegar('/app/documentos', { replace: true });
+      void navegar('/app/documentos', { replace: true });
     },
     onError: (e) => toast.error(mensagemDoErro(e)),
   });
@@ -95,28 +119,41 @@ function Conteudo({ documento }: { readonly documento: DetalheDoDocumento }) {
           <span className="flex flex-wrap items-center gap-2 text-sm">
             <EtiquetaDoDocumento status={documento.status} />
             <span className="text-tinta-3 font-mono">{documento.codigo}</span>
-            <span className="text-tinta-3">· criado por {documento.criadoPor.nome} {formatarRelativo(documento.criadoEm)}</span>
+            <span className="text-tinta-3">
+              · criado por {documento.criadoPor.nome} {formatarRelativo(documento.criadoEm)}
+            </span>
           </span>
         }
         acoes={
           <>
             {documento.meuSignatario && (
-              <Botao icone={<PenLine className="size-4" />} carregando={assinarAgora.isPending} onClick={() => assinarAgora.mutate()}>
+              <Botao
+                icone={<PenLine className="size-4" />}
+                carregando={assinarAgora.isPending}
+                onClick={() => assinarAgora.mutate()}
+              >
                 Assinar agora
               </Botao>
             )}
             {documento.status === 'rascunho' && documento.podeGerenciar && (
               <>
-                <Link to={`/app/documentos/${documento.uuid}/preparar`} className={estilosDeBotao('primario')}>
+                <Link
+                  to={`/app/documentos/${documento.uuid}/preparar`}
+                  className={estilosDeBotao('primario')}
+                >
                   <Wand2 className="size-4" aria-hidden="true" /> Continuar preparando
                 </Link>
                 <Botao
                   variante="secundario"
                   icone={<Trash2 className="size-4" />}
                   onClick={() =>
-                    void confirmar({ titulo: 'Excluir rascunho?', mensagem: 'O arquivo e as configurações serão apagados. Esta ação não pode ser desfeita.', confirmar: 'Excluir', perigosa: true }).then(
-                      (ok) => ok && excluir.mutate(),
-                    )
+                    void confirmar({
+                      titulo: 'Excluir rascunho?',
+                      mensagem:
+                        'O arquivo e as configurações serão apagados. Esta ação não pode ser desfeita.',
+                      confirmar: 'Excluir',
+                      perigosa: true,
+                    }).then((ok) => ok && excluir.mutate())
                   }
                 >
                   Excluir
@@ -124,17 +161,29 @@ function Conteudo({ documento }: { readonly documento: DetalheDoDocumento }) {
               </>
             )}
             {documento.hashAssinado && (
-              <a href={apiDeDocumentos.urlDoArquivo(documento.uuid, 'assinado', true)} className={estilosDeBotao(documento.meuSignatario ? 'secundario' : 'primario')}>
+              <a
+                href={apiDeDocumentos.urlDoArquivo(documento.uuid, 'assinado', true)}
+                className={estilosDeBotao(documento.meuSignatario ? 'secundario' : 'primario')}
+              >
                 <Download className="size-4" aria-hidden="true" /> Baixar assinado
               </a>
             )}
             {documento.status !== 'rascunho' && (
-              <a href={documento.urlDeValidacao} target="_blank" rel="noreferrer" className={estilosDeBotao('secundario')}>
+              <a
+                href={documento.urlDeValidacao}
+                target="_blank"
+                rel="noreferrer"
+                className={estilosDeBotao('secundario')}
+              >
                 <ExternalLink className="size-4" aria-hidden="true" /> Validação pública
               </a>
             )}
             {documento.status === 'em_andamento' && documento.podeGerenciar && (
-              <Botao variante="secundario" icone={<Ban className="size-4" />} onClick={() => definirCancelando(true)}>
+              <Botao
+                variante="secundario"
+                icone={<Ban className="size-4" />}
+                onClick={() => definirCancelando(true)}
+              >
                 Cancelar
               </Botao>
             )}
@@ -143,13 +192,18 @@ function Conteudo({ documento }: { readonly documento: DetalheDoDocumento }) {
       />
 
       {documento.status === 'cancelado' && documento.motivoCancelamento && (
-        <Alerta tom="alerta" titulo={`Cancelado em ${formatarDataHora(documento.canceladoEm)}`} className="mb-6">
+        <Alerta
+          tom="alerta"
+          titulo={`Cancelado em ${formatarDataHora(documento.canceladoEm)}`}
+          className="mb-6"
+        >
           {documento.motivoCancelamento}
         </Alerta>
       )}
       {documento.status === 'recusado' && (
         <Alerta tom="perigo" titulo="Um signatário recusou a assinatura" className="mb-6">
-          {documento.signatarios.find((s) => s.status === 'recusado')?.motivoRecusa ?? 'O documento foi encerrado.'}
+          {documento.signatarios.find((s) => s.status === 'recusado')?.motivoRecusa ??
+            'O documento foi encerrado.'}
         </Alerta>
       )}
 
@@ -157,7 +211,11 @@ function Conteudo({ documento }: { readonly documento: DetalheDoDocumento }) {
         <div className="space-y-6">
           <Cartao>
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-              <AnelDeProgresso assinados={assinados} total={total} concluido={documento.status === 'concluido'} />
+              <AnelDeProgresso
+                assinados={assinados}
+                total={total}
+                concluido={documento.status === 'concluido'}
+              />
               <div className="min-w-0 flex-1">
                 <p className="text-tinta text-lg font-bold">
                   {documento.status === 'concluido'
@@ -176,7 +234,10 @@ function Conteudo({ documento }: { readonly documento: DetalheDoDocumento }) {
                     const { curto, icone: Icone } = VERIFICACAO[tipo];
 
                     return (
-                      <span key={tipo} className="bg-superficie-2 text-tinta-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs">
+                      <span
+                        key={tipo}
+                        className="bg-superficie-2 text-tinta-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs"
+                      >
                         <Icone className="size-3.5" aria-hidden="true" /> {curto}
                       </span>
                     );
@@ -187,7 +248,14 @@ function Conteudo({ documento }: { readonly documento: DetalheDoDocumento }) {
           </Cartao>
 
           <Cartao>
-            <CabecalhoDoCartao titulo="Signatários" descricao={documento.ordemSequencial ? 'Assinam na ordem abaixo.' : 'Assinam em qualquer ordem.'} />
+            <CabecalhoDoCartao
+              titulo="Signatários"
+              descricao={
+                documento.ordemSequencial
+                  ? 'Assinam na ordem abaixo.'
+                  : 'Assinam em qualquer ordem.'
+              }
+            />
             <ol className="space-y-3">
               {documento.signatarios.map((s) => (
                 <CartaoDoSignatario key={s.uuid} documento={documento} signatario={s} />
@@ -210,23 +278,34 @@ function Conteudo({ documento }: { readonly documento: DetalheDoDocumento }) {
               ]}
             />
           )}
-          <VisualizadorDePdf key={versao} arquivo={apiDeDocumentos.urlDoArquivo(documento.uuid, versao)} alturaMaxima="70dvh" />
+          <VisualizadorDePdf
+            key={versao}
+            arquivo={apiDeDocumentos.urlDoArquivo(documento.uuid, versao)}
+            alturaMaxima="70dvh"
+          />
 
           <Cartao>
-            <CabecalhoDoCartao titulo="Integridade" descricao="As impressões digitais que a validação pública confere." />
+            <CabecalhoDoCartao
+              titulo="Integridade"
+              descricao="As impressões digitais que a validação pública confere."
+            />
             <dl className="space-y-4 text-sm">
               <div>
                 <dt className="text-tinta-3 mb-1 flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase">
                   <Fingerprint className="size-3.5" aria-hidden="true" /> SHA-256 do original
                 </dt>
-                <dd><Hash valor={documento.hashOriginal} /></dd>
+                <dd>
+                  <Hash valor={documento.hashOriginal} />
+                </dd>
               </div>
               {documento.hashAssinado && (
                 <div>
                   <dt className="text-tinta-3 mb-1 flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase">
                     <ShieldCheck className="size-3.5" aria-hidden="true" /> SHA-256 do PDF assinado
                   </dt>
-                  <dd><Hash valor={documento.hashAssinado} /></dd>
+                  <dd>
+                    <Hash valor={documento.hashAssinado} />
+                  </dd>
                 </div>
               )}
               <div className="border-linha grid grid-cols-3 gap-3 border-t pt-4">
@@ -239,7 +318,12 @@ function Conteudo({ documento }: { readonly documento: DetalheDoDocumento }) {
         </div>
       </div>
 
-      <ModalDeCancelamento aberto={cancelando} aoFechar={() => definirCancelando(false)} uuid={documento.uuid} aoCancelar={atualizar} />
+      <ModalDeCancelamento
+        aberto={cancelando}
+        aoFechar={() => definirCancelando(false)}
+        uuid={documento.uuid}
+        aoCancelar={atualizar}
+      />
     </>
   );
 }
@@ -253,14 +337,33 @@ function Info({ rotulo, valor }: { readonly rotulo: string; readonly valor: stri
   );
 }
 
-function AnelDeProgresso({ assinados, total, concluido }: { readonly assinados: number; readonly total: number; readonly concluido: boolean }) {
+function AnelDeProgresso({
+  assinados,
+  total,
+  concluido,
+}: {
+  readonly assinados: number;
+  readonly total: number;
+  readonly concluido: boolean;
+}) {
   const fracao = total === 0 ? 0 : assinados / total;
   const circunferencia = 2 * Math.PI * 34;
 
   return (
-    <div className="relative size-24 shrink-0" role="img" aria-label={`${assinados} de ${total} assinaturas`}>
+    <div
+      className="relative size-24 shrink-0"
+      role="img"
+      aria-label={`${assinados} de ${total} assinaturas`}
+    >
       <svg viewBox="0 0 80 80" className="size-24 -rotate-90">
-        <circle cx="40" cy="40" r="34" className="stroke-superficie-3" strokeWidth="8" fill="none" />
+        <circle
+          cx="40"
+          cy="40"
+          r="34"
+          className="stroke-superficie-3"
+          strokeWidth="8"
+          fill="none"
+        />
         <circle
           cx="40"
           cy="40"
@@ -281,13 +384,25 @@ function AnelDeProgresso({ assinados, total, concluido }: { readonly assinados: 
         </defs>
       </svg>
       <span className="absolute inset-0 flex items-center justify-center">
-        {concluido ? <CheckCircle2 className="text-sucesso size-9" aria-hidden="true" /> : <span className="font-display text-tinta text-xl font-extrabold numeros">{Math.round(fracao * 100)}%</span>}
+        {concluido ? (
+          <CheckCircle2 className="text-sucesso size-9" aria-hidden="true" />
+        ) : (
+          <span className="font-display text-tinta text-xl font-extrabold numeros">
+            {Math.round(fracao * 100)}%
+          </span>
+        )}
       </span>
     </div>
   );
 }
 
-function CartaoDoSignatario({ documento, signatario }: { readonly documento: DetalheDoDocumento; readonly signatario: SignatarioDoDetalhe }) {
+function CartaoDoSignatario({
+  documento,
+  signatario,
+}: {
+  readonly documento: DetalheDoDocumento;
+  readonly signatario: SignatarioDoDetalhe;
+}) {
   const [link, definirLink] = useState<string | null>(null);
   const reenviar = useMutation({
     mutationFn: () => apiDeDocumentos.reenviar(documento.uuid, signatario.uuid),
@@ -298,14 +413,25 @@ function CartaoDoSignatario({ documento, signatario }: { readonly documento: Det
     onError: (e) => toast.error(mensagemDoErro(e)),
   });
 
-  const quando =
-    signatario.assinadoEm ? `Assinou ${formatarRelativo(signatario.assinadoEm)}`
-    : signatario.recusadoEm ? `Recusou ${formatarRelativo(signatario.recusadoEm)}`
-    : signatario.visualizadoEm ? `Abriu ${formatarRelativo(signatario.visualizadoEm)}`
-    : documento.status === 'em_andamento' ? (signatario.ehAVez ? 'Convite enviado — aguardando' : 'Aguardando a vez') : '—';
+  const quando = signatario.assinadoEm
+    ? `Assinou ${formatarRelativo(signatario.assinadoEm)}`
+    : signatario.recusadoEm
+      ? `Recusou ${formatarRelativo(signatario.recusadoEm)}`
+      : signatario.visualizadoEm
+        ? `Abriu ${formatarRelativo(signatario.visualizadoEm)}`
+        : documento.status === 'em_andamento'
+          ? signatario.ehAVez
+            ? 'Convite enviado — aguardando'
+            : 'Aguardando a vez'
+          : '—';
 
   return (
-    <li className={cn('rounded-2xl border p-4 transition', signatario.ehAVez ? 'border-alerta/40 bg-alerta-suave/30' : 'border-linha')}>
+    <li
+      className={cn(
+        'rounded-2xl border p-4 transition',
+        signatario.ehAVez ? 'border-alerta/40 bg-alerta-suave/30' : 'border-linha',
+      )}
+    >
       <div className="flex items-start gap-3.5">
         <div className="relative">
           <Avatar nome={signatario.nome} />
@@ -334,13 +460,21 @@ function CartaoDoSignatario({ documento, signatario }: { readonly documento: Det
                     key={v.tipo}
                     className={cn(
                       'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
-                      v.aprovada ? 'bg-sucesso-suave text-sucesso-tinta' : 'bg-superficie-2 text-tinta-3',
+                      v.aprovada
+                        ? 'bg-sucesso-suave text-sucesso-tinta'
+                        : 'bg-superficie-2 text-tinta-3',
                     )}
                   >
                     <Icone className="size-3.5" aria-hidden="true" />
                     {curto}
-                    {v.aprovada ? <CheckCircle2 className="size-3" aria-label="aprovada" /> : <span className="sr-only">pendente</span>}
-                    {v.aprovada && v.pontuacao !== null && v.tipo !== 'codigo_email' && <span className="opacity-70 numeros">{Math.round(v.pontuacao * 100)}%</span>}
+                    {v.aprovada ? (
+                      <CheckCircle2 className="size-3" aria-label="aprovada" />
+                    ) : (
+                      <span className="sr-only">pendente</span>
+                    )}
+                    {v.aprovada && v.pontuacao !== null && v.tipo !== 'codigo_email' && (
+                      <span className="opacity-70 numeros">{Math.round(v.pontuacao * 100)}%</span>
+                    )}
                   </li>
                 );
               })}
@@ -349,7 +483,13 @@ function CartaoDoSignatario({ documento, signatario }: { readonly documento: Det
         </div>
 
         {documento.podeGerenciar && signatario.ehAVez && (
-          <Botao variante="secundario" tamanho="sm" icone={<RotateCw className="size-3.5" />} carregando={reenviar.isPending} onClick={() => reenviar.mutate()}>
+          <Botao
+            variante="secundario"
+            tamanho="sm"
+            icone={<RotateCw className="size-3.5" />}
+            carregando={reenviar.isPending}
+            onClick={() => reenviar.mutate()}
+          >
             Reenviar
           </Botao>
         )}
@@ -363,7 +503,13 @@ function CartaoDoSignatario({ documento, signatario }: { readonly documento: Det
             variante="fantasma"
             tamanho="sm"
             icone={<Copy className="size-3.5" />}
-            onClick={() => void navigator.clipboard.writeText(link).then(() => toast.success('Link copiado. Ele é pessoal: envie só para esta pessoa.'))}
+            onClick={() =>
+              void navigator.clipboard
+                .writeText(link)
+                .then(() =>
+                  toast.success('Link copiado. Ele é pessoal: envie só para esta pessoa.'),
+                )
+            }
           >
             Copiar
           </Botao>
@@ -375,7 +521,10 @@ function CartaoDoSignatario({ documento, signatario }: { readonly documento: Det
 
 function TrilhaDoDocumento({ uuid }: { readonly uuid: string }) {
   const [expandida, definirExpandida] = useState(false);
-  const consulta = useQuery({ queryKey: ['documento', uuid, 'trilha'], queryFn: () => apiDeDocumentos.trilha(uuid) });
+  const consulta = useQuery({
+    queryKey: ['documento', uuid, 'trilha'],
+    queryFn: () => apiDeDocumentos.trilha(uuid),
+  });
 
   return (
     <Cartao>
@@ -386,11 +535,13 @@ function TrilhaDoDocumento({ uuid }: { readonly uuid: string }) {
           consulta.data &&
           (consulta.data.integridade.integra ? (
             <span className="bg-sucesso-suave text-sucesso-tinta inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold">
-              <ShieldCheck className="size-4" aria-hidden="true" /> Íntegra · {consulta.data.integridade.total} eventos
+              <ShieldCheck className="size-4" aria-hidden="true" /> Íntegra ·{' '}
+              {consulta.data.integridade.total} eventos
             </span>
           ) : (
             <span className="bg-perigo-suave text-perigo-tinta inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold">
-              <ShieldAlert className="size-4" aria-hidden="true" /> Quebrada no evento {consulta.data.integridade.quebraEm}
+              <ShieldAlert className="size-4" aria-hidden="true" /> Quebrada no evento{' '}
+              {consulta.data.integridade.quebraEm}
             </span>
           ))
         }
@@ -400,23 +551,44 @@ function TrilhaDoDocumento({ uuid }: { readonly uuid: string }) {
       {consulta.data && (
         <>
           <ol className="relative space-y-4 pl-6">
-            <span aria-hidden="true" className="bg-linha absolute top-1.5 bottom-1.5 left-[7px] w-px" />
+            <span
+              aria-hidden="true"
+              className="bg-linha absolute top-1.5 bottom-1.5 left-[7px] w-px"
+            />
             {(expandida ? consulta.data.eventos : consulta.data.eventos.slice(-6)).map((e) => (
               <li key={e.sequencia} className="relative">
-                <span aria-hidden="true" className={cn('ring-superficie absolute top-1 -left-6 size-3.5 rounded-full ring-4', e.acao === 'documento_concluido' ? 'bg-sucesso' : e.tipoAtor === 'signatario' ? 'bg-destaque' : 'bg-linha-forte')} />
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    'ring-superficie absolute top-1 -left-6 size-3.5 rounded-full ring-4',
+                    e.acao === 'documento_concluido'
+                      ? 'bg-sucesso'
+                      : e.tipoAtor === 'signatario'
+                        ? 'bg-destaque'
+                        : 'bg-linha-forte',
+                  )}
+                />
                 <p className="text-tinta text-sm">{e.resumo}</p>
                 <p className="text-tinta-3 mt-0.5 flex flex-wrap gap-x-2 text-xs">
                   <span>#{e.sequencia}</span>
                   <span>{formatarDataHora(e.criadoEm)}</span>
                   {e.ip && <span>IP {e.ip}</span>}
-                  <span className="font-mono" title={e.hash}>{e.hash.slice(0, 12)}…</span>
+                  <span className="font-mono" title={e.hash}>
+                    {e.hash.slice(0, 12)}…
+                  </span>
                 </p>
               </li>
             ))}
           </ol>
           {consulta.data.eventos.length > 6 && (
-            <button type="button" onClick={() => definirExpandida(!expandida)} className="text-destaque mt-4 text-sm font-semibold hover:underline">
-              {expandida ? 'Mostrar só os recentes' : `Ver todos os ${consulta.data.eventos.length} eventos`}
+            <button
+              type="button"
+              onClick={() => definirExpandida(!expandida)}
+              className="text-destaque mt-4 text-sm font-semibold hover:underline"
+            >
+              {expandida
+                ? 'Mostrar só os recentes'
+                : `Ver todos os ${consulta.data.eventos.length} eventos`}
             </button>
           )}
         </>
@@ -425,7 +597,17 @@ function TrilhaDoDocumento({ uuid }: { readonly uuid: string }) {
   );
 }
 
-function ModalDeCancelamento({ aberto, aoFechar, uuid, aoCancelar }: { readonly aberto: boolean; readonly aoFechar: () => void; readonly uuid: string; readonly aoCancelar: () => Promise<void> }) {
+function ModalDeCancelamento({
+  aberto,
+  aoFechar,
+  uuid,
+  aoCancelar,
+}: {
+  readonly aberto: boolean;
+  readonly aoFechar: () => void;
+  readonly uuid: string;
+  readonly aoCancelar: () => Promise<void>;
+}) {
   const [motivo, definirMotivo] = useState('');
   const cancelar = useMutation({
     mutationFn: () => apiDeDocumentos.cancelar(uuid, motivo.trim()),
@@ -445,15 +627,27 @@ function ModalDeCancelamento({ aberto, aoFechar, uuid, aoCancelar }: { readonly 
       descricao="Quem ainda não assinou não poderá mais assinar. O motivo fica registrado na trilha de auditoria."
       rodape={
         <>
-          <Botao variante="secundario" onClick={aoFechar}>Voltar</Botao>
-          <Botao variante="perigo" disabled={motivo.trim().length < 5} carregando={cancelar.isPending} onClick={() => cancelar.mutate()}>
+          <Botao variante="secundario" onClick={aoFechar}>
+            Voltar
+          </Botao>
+          <Botao
+            variante="perigo"
+            disabled={motivo.trim().length < 5}
+            carregando={cancelar.isPending}
+            onClick={() => cancelar.mutate()}
+          >
             Cancelar documento
           </Botao>
         </>
       }
     >
       <Campo rotulo="Motivo do cancelamento" dica="Pelo menos 5 caracteres.">
-        <AreaDeTexto value={motivo} maxLength={500} onChange={(e) => definirMotivo(e.target.value)} placeholder="Ex.: as condições foram renegociadas e uma nova versão será enviada." />
+        <AreaDeTexto
+          value={motivo}
+          maxLength={500}
+          onChange={(e) => definirMotivo(e.target.value)}
+          placeholder="Ex.: as condições foram renegociadas e uma nova versão será enviada."
+        />
       </Campo>
     </Modal>
   );

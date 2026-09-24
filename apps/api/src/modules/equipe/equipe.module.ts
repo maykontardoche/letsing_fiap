@@ -1,6 +1,25 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Module, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Module,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsEmail, IsEnum, IsOptional, IsString, Length, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  Length,
+  MaxLength,
+} from 'class-validator';
 import { Papel } from '@prisma/client';
 import { ExigePermissao, OrigemDaRequisicao, UsuarioAtual } from '../../common/auth/decorators';
 import type { Origem, UsuarioAutenticado } from '../../common/auth/requisicao';
@@ -12,7 +31,9 @@ export class ConvidarMembroDto {
   @Length(2, 120, { message: 'O nome deve ter entre 2 e 120 caracteres.' })
   nome!: string;
 
-  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
   @IsEmail({}, { message: 'Informe um e-mail válido.' })
   @MaxLength(180)
   email!: string;
@@ -45,7 +66,11 @@ export class EquipeController {
 
   @Post()
   @ExigePermissao('equipe.gerenciar')
-  convidar(@UsuarioAtual() usuario: UsuarioAutenticado, @Body() dto: ConvidarMembroDto, @OrigemDaRequisicao() origem: Origem) {
+  convidar(
+    @UsuarioAtual() usuario: UsuarioAutenticado,
+    @Body() dto: ConvidarMembroDto,
+    @OrigemDaRequisicao() origem: Origem,
+  ) {
     return this.servico.convidar(usuario, dto, origem);
   }
 

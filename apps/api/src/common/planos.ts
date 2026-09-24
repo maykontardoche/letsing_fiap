@@ -23,5 +23,7 @@ export function inicioDoMes(agora = new Date()): Date {
   const brasilia = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
   const deslocamento = agora.getTime() - brasilia.getTime();
 
-  return new Date(new Date(brasilia.getFullYear(), brasilia.getMonth(), 1).getTime() + deslocamento);
+  return new Date(
+    new Date(brasilia.getFullYear(), brasilia.getMonth(), 1).getTime() + deslocamento,
+  );
 }

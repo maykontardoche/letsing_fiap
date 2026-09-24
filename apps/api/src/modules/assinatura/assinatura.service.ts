@@ -6,13 +6,24 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { Prisma, type DesafioDeVerificacao, type Documento, type Organizacao, type Signatario, type TipoDeVerificacao, type Usuario } from '@prisma/client';
+import {
+  Prisma,
+  type DesafioDeVerificacao,
+  type Documento,
+  type Organizacao,
+  type Signatario,
+  type TipoDeVerificacao,
+  type Usuario,
+} from '@prisma/client';
 import { PrismaService } from '../../config/database/prisma.service';
 import { EnvService } from '../../config/env/env.service';
 import { ArmazenamentoService } from '../../common/armazenamento/armazenamento.service';
 import { ConvitesService, ehAVezDe } from '../../common/assinaturas/convites.service';
 import { FinalizadorDeDocumentoService } from '../../common/assinaturas/finalizador-de-documento.service';
-import { ROTULO_DA_VERIFICACAO, VERIFICACOES_DO_NIVEL } from '../../common/assinaturas/status-do-documento';
+import {
+  ROTULO_DA_VERIFICACAO,
+  VERIFICACOES_DO_NIVEL,
+} from '../../common/assinaturas/status-do-documento';
 import { AuditoriaService } from '../../common/auditoria/auditoria.service';
 import type { Origem } from '../../common/auth/requisicao';
 import { ChaveDaPlataformaService } from '../../common/cripto/chave-da-plataforma.service';
@@ -21,6 +32,7 @@ import { gerarCodigoNumerico, iguaisEmTempoConstante, sha256 } from '../../commo
 import { EmailService } from '../../common/email/email.service';
 import { modelos } from '../../common/email/modelos';
 import { NotificacoesService } from '../../common/notificacoes/notificacoes.service';
+import { comOrganizacaoDoContexto } from '../../common/tenancy/dados-escopados';
 import { executarNoContexto, semEscopoDeOrganizacao } from '../../common/tenancy/tenant-context';
 import { abreviarNome, apenasDigitos, cpfValido, mascararEmail } from '../../common/texto/mascaras';
 import {
@@ -37,16 +49,27 @@ import {
   VALIDADE_DO_DESAFIO_MS,
   type ResultadoDoDesafio,
 } from './desafios';
-import type { AssinarDto, ConcluirCodigoDto, ConcluirFacialDto, ConcluirGestosDto, ConcluirVozDto } from './assinatura.dto';
+import type {
+  AssinarDto,
+  ConcluirCodigoDto,
+  ConcluirFacialDto,
+  ConcluirGestosDto,
+  ConcluirVozDto,
+} from './assinatura.dto';
 
-type DocumentoCompleto = Documento & { organizacao: Organizacao; criadoPor: Usuario; signatarios: Signatario[] };
+type DocumentoCompleto = Documento & {
+  organizacao: Organizacao;
+  criadoPor: Usuario;
+  signatarios: Signatario[];
+};
 
 interface Contexto {
   readonly signatario: Signatario & { desafios: DesafioDeVerificacao[] };
   readonly documento: DocumentoCompleto;
 }
 
-const LINK_INVALIDO = 'Este link de assinatura é inválido ou expirou. Peça um novo convite a quem enviou o documento.';
+const LINK_INVALIDO =
+  'Este link de assinatura é inválido ou expirou. Peça um novo convite a quem enviou o documento.';
 
 /**
  * O fluxo de quem assina — **sem conta**, autenticado pelo token do link.
@@ -68,7 +91,6 @@ const LINK_INVALIDO = 'Este link de assinatura é inválido ou expirou. Peça um
 export class AssinaturaService {
   private readonly logger = new Logger(AssinaturaService.name);
 
-  // eslint-disable-next-line max-params -- colaboradores injetados pelo Nest
   constructor(
     private readonly prisma: PrismaService,
     private readonly armazenamento: ArmazenamentoService,
@@ -91,12 +113,21 @@ export class AssinaturaService {
         where: { tokenHash: sha256(token) },
         include: {
           desafios: { orderBy: { criadoEm: 'desc' } },
-          documento: { include: { organizacao: true, criadoPor: true, signatarios: { orderBy: { ordem: 'asc' } } } },
+          documento: {
+            include: {
+              organizacao: true,
+              criadoPor: true,
+              signatarios: { orderBy: { ordem: 'asc' } },
+            },
+          },
         },
       }),
     );
 
-    if (signatario === null || (signatario.tokenExpiraEm !== null && signatario.tokenExpiraEm < new Date())) {
+    if (
+      signatario === null ||
+      (signatario.tokenExpiraEm !== null && signatario.tokenExpiraEm < new Date())
+    ) {
       throw new NotFoundException(LINK_INVALIDO);
     }
 
@@ -113,7 +144,10 @@ export class AssinaturaService {
         await this.prisma.db.$transaction(async (tx) => {
           await tx.signatario.update({
             where: { id: signatario.id },
-            data: { visualizadoEm: new Date(), status: signatario.status === 'pendente' ? 'visualizado' : signatario.status },
+            data: {
+              visualizadoEm: new Date(),
+              status: signatario.status === 'pendente' ? 'visualizado' : signatario.status,
+            },
           });
           await this.auditoria.registrar(
             {
@@ -138,9 +172,13 @@ export class AssinaturaService {
     return this.comToken(token, async ({ documento }) => {
       const chave = versao === 'assinado' ? documento.arquivoAssinado : documento.arquivoOriginal;
 
-      if (chave === null) throw new NotFoundException('O PDF assinado fica disponível quando todos assinarem.');
+      if (chave === null)
+        throw new NotFoundException('O PDF assinado fica disponível quando todos assinarem.');
 
-      return { conteudo: await this.armazenamento.ler(chave), nome: `${documento.codigo}-${versao}.pdf` };
+      return {
+        conteudo: await this.armazenamento.ler(chave),
+        nome: `${documento.codigo}-${versao}.pdf`,
+      };
     });
   }
 
@@ -154,12 +192,12 @@ export class AssinaturaService {
 
       const desafio = sortearDesafio(tipo);
       const registro = await this.prisma.db.desafioDeVerificacao.create({
-        data: {
+        data: comOrganizacaoDoContexto<Prisma.DesafioDeVerificacaoUncheckedCreateInput>({
           signatarioId: signatario.id,
           tipo,
-          desafio: desafio as Prisma.InputJsonValue,
+          desafio,
           expiraEm: new Date(Date.now() + VALIDADE_DO_DESAFIO_MS),
-        } as Prisma.DesafioDeVerificacaoUncheckedCreateInput,
+        }),
       });
 
       return { desafio: registro.uuid, expiraEm: registro.expiraEm, ...desafio };
@@ -172,27 +210,49 @@ export class AssinaturaService {
 
       return iguaisEmTempoConstante(sha256(`${dto.codigo}:${desafio.uuid}`), esperado)
         ? { aprovado: true, pontuacao: 1 }
-        : { aprovado: false, pontuacao: 0, motivo: 'Código incorreto. Confira o e-mail mais recente.' };
+        : {
+            aprovado: false,
+            pontuacao: 0,
+            motivo: 'Código incorreto. Confira o e-mail mais recente.',
+          };
     });
   }
 
   concluirVoz(token: string, dto: ConcluirVozDto, origem: Origem) {
-    return this.concluir(token, 'voz', dto.desafio, origem, (desafio) =>
-      avaliarVoz((desafio.desafio as { palavras: string[] }).palavras, dto.transcricao),
+    return this.concluir(
+      token,
+      'voz',
+      dto.desafio,
+      origem,
+      (desafio) =>
+        avaliarVoz((desafio.desafio as { palavras: string[] }).palavras, dto.transcricao),
       { transcricao: dto.transcricao.slice(0, 200) },
     );
   }
 
   concluirGestos(token: string, dto: ConcluirGestosDto, origem: Origem) {
-    return this.concluir(token, 'gestos', dto.desafio, origem, (desafio) =>
-      avaliarGestos((desafio.desafio as { sequencia: string[] }).sequencia, dto.gestos, dto.confiancas),
+    return this.concluir(
+      token,
+      'gestos',
+      dto.desafio,
+      origem,
+      (desafio) =>
+        avaliarGestos(
+          (desafio.desafio as { sequencia: string[] }).sequencia,
+          dto.gestos,
+          dto.confiancas,
+        ),
       { gestos: dto.gestos },
     );
   }
 
   concluirFacial(token: string, dto: ConcluirFacialDto, origem: Origem) {
-    return this.concluir(token, 'facial', dto.desafio, origem, (desafio) =>
-      avaliarFacial((desafio.desafio as { acoes: string[] }).acoes, dto.medicao),
+    return this.concluir(
+      token,
+      'facial',
+      dto.desafio,
+      origem,
+      (desafio) => avaliarFacial((desafio.desafio as { acoes: string[] }).acoes, dto.medicao),
       { ...dto.medicao },
     );
   }
@@ -203,7 +263,9 @@ export class AssinaturaService {
       this.exigirPodeAssinar(signatario, documento);
 
       const aprovadas = this.verificacoesValidas(signatario, documento);
-      const faltando = VERIFICACOES_DO_NIVEL[documento.nivelVerificacao].filter((tipo) => !aprovadas.has(tipo));
+      const faltando = VERIFICACOES_DO_NIVEL[documento.nivelVerificacao].filter(
+        (tipo) => !aprovadas.has(tipo),
+      );
 
       if (faltando.length > 0) {
         throw new UnprocessableEntityException(
@@ -217,7 +279,11 @@ export class AssinaturaService {
       const { carga, assinatura } = assinador.assinar({
         versao: 1,
         tipo: 'assinatura',
-        documento: { uuid: documento.uuid, codigo: documento.codigo, hashOriginal: documento.hashOriginal },
+        documento: {
+          uuid: documento.uuid,
+          codigo: documento.codigo,
+          hashOriginal: documento.hashOriginal,
+        },
         signatario: {
           uuid: signatario.uuid,
           nome: signatario.nome,
@@ -227,7 +293,12 @@ export class AssinaturaService {
         },
         assinadoEm,
         origem: { ip: origem.ip ?? null },
-        verificacoes: [...aprovadas.values()].map((d) => ({ tipo: d.tipo, desafio: d.uuid, concluidoEm: d.concluidoEm, pontuacao: d.pontuacao })),
+        verificacoes: [...aprovadas.values()].map((d) => ({
+          tipo: d.tipo,
+          desafio: d.uuid,
+          concluidoEm: d.concluidoEm,
+          pontuacao: d.pontuacao,
+        })),
         manifestacao: 'Li o documento e concordo com o seu conteúdo.',
         chave: assinador.idDaChave,
       });
@@ -244,11 +315,17 @@ export class AssinaturaService {
             imagemAssinatura: dto.imagem,
             cargaAssinada: carga,
             assinaturaDigital: assinatura,
-            ...(cpf ? { cpfCifrado: cifrar(cpf, chaveDeCifra(this.env.chaveDeCifra)), cpfFinal: cpf.slice(-2) } : {}),
+            ...(cpf
+              ? {
+                  cpfCifrado: cifrar(cpf, chaveDeCifra(this.env.chaveDeCifra)),
+                  cpfFinal: cpf.slice(-2),
+                }
+              : {}),
           },
         });
 
-        if (count === 0) throw new UnprocessableEntityException('Esta assinatura já foi registrada.');
+        if (count === 0)
+          throw new UnprocessableEntityException('Esta assinatura já foi registrada.');
 
         await this.auditoria.registrar(
           {
@@ -258,7 +335,10 @@ export class AssinaturaService {
             atorId: signatario.id,
             atorNome: signatario.nome,
             documento: { id: documento.id, uuid: documento.uuid },
-            dados: { assinatura: sha256(assinatura).slice(0, 16), verificacoes: [...aprovadas.keys()] },
+            dados: {
+              assinatura: sha256(assinatura).slice(0, 16),
+              verificacoes: [...aprovadas.keys()],
+            },
             origem,
             em: assinadoEm,
           },
@@ -283,14 +363,20 @@ export class AssinaturaService {
 
     // A conclusão (PDF + selo) não pode desfazer a assinatura já registrada: se
     // falhar aqui, o job periódico conclui depois.
-    const concluido = await executarNoContexto({ organizacaoId: resultado.organizacaoId }, async () => {
-      try {
-        return await this.finalizador.finalizarSePronto(resultado.documentoId);
-      } catch (erro) {
-        this.logger.error(`Falha ao concluir o documento ${resultado.documentoId}; o job tentará de novo.`, erro instanceof Error ? erro.stack : String(erro));
-        return false;
-      }
-    });
+    const concluido = await executarNoContexto(
+      { organizacaoId: resultado.organizacaoId },
+      async () => {
+        try {
+          return await this.finalizador.finalizarSePronto(resultado.documentoId);
+        } catch (erro) {
+          this.logger.error(
+            `Falha ao concluir o documento ${resultado.documentoId}; o job tentará de novo.`,
+            erro instanceof Error ? erro.stack : String(erro),
+          );
+          return false;
+        }
+      },
+    );
 
     return { concluido };
   }
@@ -300,9 +386,15 @@ export class AssinaturaService {
       this.exigirPodeAssinar(signatario, documento);
 
       await this.prisma.db.$transaction(async (tx) => {
-        await tx.signatario.update({ where: { id: signatario.id }, data: { status: 'recusado', recusadoEm: new Date(), motivoRecusa: motivo } });
+        await tx.signatario.update({
+          where: { id: signatario.id },
+          data: { status: 'recusado', recusadoEm: new Date(), motivoRecusa: motivo },
+        });
         await tx.documento.update({ where: { id: documento.id }, data: { status: 'recusado' } });
-        await tx.signatario.updateMany({ where: { documentoId: documento.id, NOT: { id: signatario.id } }, data: { tokenHash: null } });
+        await tx.signatario.updateMany({
+          where: { documentoId: documento.id, NOT: { id: signatario.id } },
+          data: { tokenHash: null },
+        });
         await this.auditoria.registrar(
           {
             acao: 'assinatura_recusada',
@@ -316,7 +408,12 @@ export class AssinaturaService {
           tx,
         );
         await this.notificacoes.criar(
-          { usuarioId: documento.criadoPorId, titulo: 'Assinatura recusada', mensagem: `${signatario.nome} recusou “${documento.titulo}”.`, link: `/app/documentos/${documento.uuid}` },
+          {
+            usuarioId: documento.criadoPorId,
+            titulo: 'Assinatura recusada',
+            mensagem: `${signatario.nome} recusou “${documento.titulo}”.`,
+            link: `/app/documentos/${documento.uuid}`,
+          },
           tx,
         );
       });
@@ -366,7 +463,10 @@ export class AssinaturaService {
         assinadoEm: signatario.assinadoEm,
         cpfInformado: signatario.cpfFinal !== null,
       },
-      ehSuaVez: documento.status === 'em_andamento' && !prazoVencido && ehAVezDe(signatario, documento.signatarios, documento.ordemSequencial),
+      ehSuaVez:
+        documento.status === 'em_andamento' &&
+        !prazoVencido &&
+        ehAVezDe(signatario, documento.signatarios, documento.ordemSequencial),
       verificacoes: exigidas.map((tipo) => ({ tipo, aprovada: aprovadas.has(tipo) })),
       participantes: documento.signatarios.map((s) => ({
         nome: s.id === signatario.id ? s.nome : abreviarNome(s.nome),
@@ -378,14 +478,21 @@ export class AssinaturaService {
   }
 
   /** Verificações aprovadas e ainda dentro da validade, por tipo. */
-  private verificacoesValidas(signatario: Contexto['signatario'], documento: Documento): Map<TipoDeVerificacao, DesafioDeVerificacao> {
+  private verificacoesValidas(
+    signatario: Contexto['signatario'],
+    documento: Documento,
+  ): Map<TipoDeVerificacao, DesafioDeVerificacao> {
     const exigidas = VERIFICACOES_DO_NIVEL[documento.nivelVerificacao];
     const limite = Date.now() - VALIDADE_DA_APROVACAO_MS;
     const validas = new Map<TipoDeVerificacao, DesafioDeVerificacao>();
 
     for (const tipo of exigidas) {
       const aprovada = signatario.desafios.find(
-        (d) => d.tipo === tipo && d.aprovado === true && d.concluidoEm !== null && (signatario.status === 'assinado' || d.concluidoEm.getTime() >= limite),
+        (d) =>
+          d.tipo === tipo &&
+          d.aprovado === true &&
+          d.concluidoEm !== null &&
+          (signatario.status === 'assinado' || d.concluidoEm.getTime() >= limite),
       );
 
       if (aprovada !== undefined) validas.set(tipo, aprovada);
@@ -395,46 +502,85 @@ export class AssinaturaService {
   }
 
   private exigirPodeAssinar(signatario: Signatario, documento: DocumentoCompleto): void {
-    if (signatario.status === 'assinado') throw new UnprocessableEntityException('Você já assinou este documento.');
-    if (signatario.status === 'recusado') throw new UnprocessableEntityException('Você recusou este documento.');
-    if (documento.status !== 'em_andamento') throw new GoneException('Este documento não está mais aceitando assinaturas.');
-    if (documento.prazo !== null && documento.prazo < new Date()) throw new GoneException('O prazo para assinar este documento terminou.');
+    if (signatario.status === 'assinado')
+      throw new UnprocessableEntityException('Você já assinou este documento.');
+    if (signatario.status === 'recusado')
+      throw new UnprocessableEntityException('Você recusou este documento.');
+    if (documento.status !== 'em_andamento')
+      throw new GoneException('Este documento não está mais aceitando assinaturas.');
+    if (documento.prazo !== null && documento.prazo < new Date())
+      throw new GoneException('O prazo para assinar este documento terminou.');
     if (!ehAVezDe(signatario, documento.signatarios, documento.ordemSequencial)) {
-      throw new UnprocessableEntityException('Ainda não é a sua vez: este documento é assinado em ordem.');
+      throw new UnprocessableEntityException(
+        'Ainda não é a sua vez: este documento é assinado em ordem.',
+      );
     }
   }
 
-  private exigirEtapaLiberada(signatario: Contexto['signatario'], documento: DocumentoCompleto, tipo: TipoDeVerificacao): void {
+  private exigirEtapaLiberada(
+    signatario: Contexto['signatario'],
+    documento: DocumentoCompleto,
+    tipo: TipoDeVerificacao,
+  ): void {
     const exigidas = VERIFICACOES_DO_NIVEL[documento.nivelVerificacao];
     const posicao = exigidas.indexOf(tipo);
 
-    if (posicao === -1) throw new BadRequestException('Esta verificação não é exigida neste documento.');
+    if (posicao === -1)
+      throw new BadRequestException('Esta verificação não é exigida neste documento.');
 
     const aprovadas = this.verificacoesValidas(signatario, documento);
     const anteriores = exigidas.slice(0, posicao).filter((anterior) => !aprovadas.has(anterior));
 
     if (anteriores.length > 0) {
-      throw new UnprocessableEntityException(`Conclua antes: ${anteriores.map((t) => ROTULO_DA_VERIFICACAO[t]).join(', ')}.`);
+      throw new UnprocessableEntityException(
+        `Conclua antes: ${anteriores.map((t) => ROTULO_DA_VERIFICACAO[t]).join(', ')}.`,
+      );
     }
   }
 
   private async enviarCodigo(signatario: Signatario, documento: Documento) {
     const recentes = await this.prisma.db.desafioDeVerificacao.count({
-      where: { signatarioId: signatario.id, tipo: 'codigo_email', criadoEm: { gte: new Date(Date.now() - 15 * 60_000) } },
+      where: {
+        signatarioId: signatario.id,
+        tipo: 'codigo_email',
+        criadoEm: { gte: new Date(Date.now() - 15 * 60_000) },
+      },
     });
 
-    if (recentes >= 5) throw new UnprocessableEntityException('Muitos códigos pedidos. Aguarde 15 minutos e tente de novo.');
+    if (recentes >= 5)
+      throw new UnprocessableEntityException(
+        'Muitos códigos pedidos. Aguarde 15 minutos e tente de novo.',
+      );
 
     const codigo = gerarCodigoNumerico(6);
     const registro = await this.prisma.db.desafioDeVerificacao.create({
-      data: { signatarioId: signatario.id, tipo: 'codigo_email', desafio: {}, expiraEm: new Date(Date.now() + VALIDADE_DO_CODIGO_MS) } as Prisma.DesafioDeVerificacaoUncheckedCreateInput,
+      data: comOrganizacaoDoContexto<Prisma.DesafioDeVerificacaoUncheckedCreateInput>({
+        signatarioId: signatario.id,
+        tipo: 'codigo_email',
+        desafio: {},
+        expiraEm: new Date(Date.now() + VALIDADE_DO_CODIGO_MS),
+      }),
     });
 
     // ⚠️ O hash usa o uuid do desafio como sal: o mesmo código em dois desafios gera hashes diferentes.
-    await this.prisma.db.desafioDeVerificacao.update({ where: { id: registro.id }, data: { desafio: { hash: sha256(`${codigo}:${registro.uuid}`) } } });
-    await this.email.enfileirar(modelos.codigoDeVerificacao({ para: signatario.email, nome: signatario.nome, codigo, titulo: documento.titulo }));
+    await this.prisma.db.desafioDeVerificacao.update({
+      where: { id: registro.id },
+      data: { desafio: { hash: sha256(`${codigo}:${registro.uuid}`) } },
+    });
+    await this.email.enfileirar(
+      modelos.codigoDeVerificacao({
+        para: signatario.email,
+        nome: signatario.nome,
+        codigo,
+        titulo: documento.titulo,
+      }),
+    );
 
-    return { desafio: registro.uuid, expiraEm: registro.expiraEm, enviadoPara: mascararEmail(signatario.email) };
+    return {
+      desafio: registro.uuid,
+      expiraEm: registro.expiraEm,
+      enviadoPara: mascararEmail(signatario.email),
+    };
   }
 
   /** O esqueleto comum a toda conclusão de desafio: valida, avalia, grava e audita. */
@@ -451,10 +597,14 @@ export class AssinaturaService {
 
       const desafio = signatario.desafios.find((d) => d.uuid === desafioUuid && d.tipo === tipo);
 
-      if (desafio === undefined) throw new NotFoundException('Desafio não encontrado. Comece a verificação de novo.');
-      if (desafio.concluidoEm !== null && desafio.aprovado === true) return { aprovado: true, pontuacao: desafio.pontuacao ?? 1 };
-      if (desafio.expiraEm < new Date()) throw new GoneException('O desafio expirou. Comece a verificação de novo.');
-      if (desafio.tentativas >= TENTATIVAS_POR_DESAFIO) throw new UnprocessableEntityException('Tentativas esgotadas. Peça um novo desafio.');
+      if (desafio === undefined)
+        throw new NotFoundException('Desafio não encontrado. Comece a verificação de novo.');
+      if (desafio.concluidoEm !== null && desafio.aprovado === true)
+        return { aprovado: true, pontuacao: desafio.pontuacao ?? 1 };
+      if (desafio.expiraEm < new Date())
+        throw new GoneException('O desafio expirou. Comece a verificação de novo.');
+      if (desafio.tentativas >= TENTATIVAS_POR_DESAFIO)
+        throw new UnprocessableEntityException('Tentativas esgotadas. Peça um novo desafio.');
 
       const resultado = avaliar(desafio);
       const agora = new Date();
@@ -465,7 +615,12 @@ export class AssinaturaService {
           data: {
             tentativas: { increment: 1 },
             ...(resultado.aprovado
-              ? { aprovado: true, concluidoEm: agora, pontuacao: resultado.pontuacao, resultado: metadados as Prisma.InputJsonValue }
+              ? {
+                  aprovado: true,
+                  concluidoEm: agora,
+                  pontuacao: resultado.pontuacao,
+                  resultado: metadados as Prisma.InputJsonValue,
+                }
               : { aprovado: false, pontuacao: resultado.pontuacao }),
           },
         });
@@ -485,7 +640,8 @@ export class AssinaturaService {
         );
       });
 
-      if (!resultado.aprovado) throw new UnprocessableEntityException(resultado.motivo ?? 'Verificação não aprovada.');
+      if (!resultado.aprovado)
+        throw new UnprocessableEntityException(resultado.motivo ?? 'Verificação não aprovada.');
 
       return { aprovado: true, pontuacao: resultado.pontuacao };
     });
@@ -502,18 +658,27 @@ export class AssinaturaService {
   }
 
   /** Em ordem sequencial, a assinatura de um libera o próximo — que recebe o convite agora. */
-  private async convidarProximo(documento: DocumentoCompleto, quemAssinou: Signatario): Promise<void> {
+  private async convidarProximo(
+    documento: DocumentoCompleto,
+    quemAssinou: Signatario,
+  ): Promise<void> {
     if (!documento.ordemSequencial) return;
 
     const proximo = documento.signatarios.find((s) => s.ordem === quemAssinou.ordem + 1);
 
     if (proximo === undefined || proximo.status !== 'pendente') return;
 
-    await this.convites.convidar(proximo, { documento, organizacao: documento.organizacao.nome, remetente: documento.criadoPor.nome });
+    await this.convites.convidar(proximo, {
+      documento,
+      organizacao: documento.organizacao.nome,
+      remetente: documento.criadoPor.nome,
+    });
   }
 }
 
-function sortearDesafio(tipo: Exclude<TipoDeVerificacao, 'codigo_email'>): Record<string, string[]> {
+function sortearDesafio(
+  tipo: Exclude<TipoDeVerificacao, 'codigo_email'>,
+): Record<string, string[]> {
   switch (tipo) {
     case 'voz':
       return { palavras: sortear(PALAVRAS, 3) };

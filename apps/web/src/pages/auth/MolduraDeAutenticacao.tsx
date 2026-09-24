@@ -23,8 +23,14 @@ export function MolduraDeAutenticacao({ titulo, subtitulo, children, rodape }: P
     <div className="bg-fundo grid min-h-dvh lg:grid-cols-[1fr_1.05fr]">
       <aside className="bg-noite-950 relative isolate hidden flex-col justify-between overflow-hidden p-12 text-white lg:flex">
         <div aria-hidden="true" className="grade-de-fundo absolute inset-0 -z-10" />
-        <div aria-hidden="true" className="bg-gradiente-marca absolute -top-40 -left-40 -z-10 size-[34rem] rounded-full opacity-30 blur-3xl" />
-        <div aria-hidden="true" className="absolute -right-32 -bottom-32 -z-10 size-[28rem] rounded-full bg-[radial-gradient(closest-side,rgba(6,182,212,0.3),transparent)] blur-2xl" />
+        <div
+          aria-hidden="true"
+          className="bg-gradiente-marca absolute -top-40 -left-40 -z-10 size-[34rem] rounded-full opacity-30 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute -right-32 -bottom-32 -z-10 size-[28rem] rounded-full bg-[radial-gradient(closest-side,rgba(6,182,212,0.3),transparent)] blur-2xl"
+        />
 
         <Link to="/" aria-label="LetsSign — início" className="w-fit">
           <Logo tom="claro" />

@@ -38,7 +38,9 @@ export function ehTerminal(status: StatusDoDocumento): boolean {
  * posse da caixa de e-mail para onde o convite foi — sem ele, quem interceptasse
  * o link (um encaminhamento descuidado) assinaria no lugar do destinatário.
  */
-export const VERIFICACOES_DO_NIVEL: Readonly<Record<NivelDeVerificacao, readonly TipoDeVerificacao[]>> = {
+export const VERIFICACOES_DO_NIVEL: Readonly<
+  Record<NivelDeVerificacao, readonly TipoDeVerificacao[]>
+> = {
   simples: ['codigo_email'],
   biometrico: ['codigo_email', 'facial'],
   completo: ['codigo_email', 'facial', 'voz', 'gestos'],

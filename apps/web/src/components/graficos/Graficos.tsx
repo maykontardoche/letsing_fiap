@@ -46,8 +46,20 @@ function useCores() {
   return useMemo(
     () =>
       tema === 'escuro'
-        ? { texto: '#8891b0', grade: 'rgba(255,255,255,0.06)', fundoDica: '#141a2e', bordaDica: '#2c3659', tinta: '#eef1fb' }
-        : { texto: '#6b7390', grade: 'rgba(15,22,41,0.06)', fundoDica: '#0f1629', bordaDica: '#0f1629', tinta: '#ffffff' },
+        ? {
+            texto: '#8891b0',
+            grade: 'rgba(255,255,255,0.06)',
+            fundoDica: '#141a2e',
+            bordaDica: '#2c3659',
+            tinta: '#eef1fb',
+          }
+        : {
+            texto: '#6b7390',
+            grade: 'rgba(15,22,41,0.06)',
+            fundoDica: '#0f1629',
+            bordaDica: '#0f1629',
+            tinta: '#ffffff',
+          },
     [tema],
   );
 }
@@ -100,7 +112,16 @@ export function GraficoMensal({ rotulos, enviados, concluidos, descricao }: Prop
     maintainAspectRatio: false,
     interaction: { mode: 'index', intersect: false },
     plugins: {
-      legend: { position: 'bottom', labels: { color: cores.texto, usePointStyle: true, boxWidth: 8, padding: 18, font: { family: 'Inter', size: 12 } } },
+      legend: {
+        position: 'bottom',
+        labels: {
+          color: cores.texto,
+          usePointStyle: true,
+          boxWidth: 8,
+          padding: 18,
+          font: { family: 'Inter', size: 12 },
+        },
+      },
       tooltip: {
         backgroundColor: cores.fundoDica,
         borderColor: cores.bordaDica,
@@ -114,8 +135,17 @@ export function GraficoMensal({ rotulos, enviados, concluidos, descricao }: Prop
       },
     },
     scales: {
-      x: { grid: { display: false }, border: { display: false }, ticks: { color: cores.texto, font: { family: 'Inter', size: 11 } } },
-      y: { beginAtZero: true, grid: { color: cores.grade }, border: { display: false }, ticks: { color: cores.texto, precision: 0, font: { family: 'Inter', size: 11 } } },
+      x: {
+        grid: { display: false },
+        border: { display: false },
+        ticks: { color: cores.texto, font: { family: 'Inter', size: 11 } },
+      },
+      y: {
+        beginAtZero: true,
+        grid: { color: cores.grade },
+        border: { display: false },
+        ticks: { color: cores.texto, precision: 0, font: { family: 'Inter', size: 11 } },
+      },
     },
   };
 
@@ -132,7 +162,15 @@ interface Fatia {
   readonly cor: string;
 }
 
-export function GraficoDeRosca({ fatias, descricao, centro }: { readonly fatias: readonly Fatia[]; readonly descricao: string; readonly centro: { valor: string; rotulo: string } }) {
+export function GraficoDeRosca({
+  fatias,
+  descricao,
+  centro,
+}: {
+  readonly fatias: readonly Fatia[];
+  readonly descricao: string;
+  readonly centro: { valor: string; rotulo: string };
+}) {
   const cores = useCores();
   const visiveis = fatias.filter((f) => f.valor > 0);
 
@@ -143,7 +181,15 @@ export function GraficoDeRosca({ fatias, descricao, centro }: { readonly fatias:
         aria-label={descricao}
         data={{
           labels: visiveis.map((f) => f.rotulo),
-          datasets: [{ data: visiveis.map((f) => f.valor), backgroundColor: visiveis.map((f) => f.cor), borderWidth: 0, hoverOffset: 6, spacing: 2 }],
+          datasets: [
+            {
+              data: visiveis.map((f) => f.valor),
+              backgroundColor: visiveis.map((f) => f.cor),
+              borderWidth: 0,
+              hoverOffset: 6,
+              spacing: 2,
+            },
+          ],
         }}
         options={{
           responsive: true,
@@ -151,12 +197,20 @@ export function GraficoDeRosca({ fatias, descricao, centro }: { readonly fatias:
           cutout: '74%',
           plugins: {
             legend: { display: false },
-            tooltip: { backgroundColor: cores.fundoDica, titleColor: cores.tinta, bodyColor: cores.tinta, padding: 10, cornerRadius: 10 },
+            tooltip: {
+              backgroundColor: cores.fundoDica,
+              titleColor: cores.tinta,
+              bodyColor: cores.tinta,
+              padding: 10,
+              cornerRadius: 10,
+            },
           },
         }}
       />
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-display text-tinta text-3xl font-extrabold numeros">{centro.valor}</span>
+        <span className="font-display text-tinta text-3xl font-extrabold numeros">
+          {centro.valor}
+        </span>
         <span className="text-tinta-3 text-xs">{centro.rotulo}</span>
       </div>
     </div>

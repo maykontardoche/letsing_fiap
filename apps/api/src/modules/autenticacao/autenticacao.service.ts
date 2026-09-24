@@ -48,7 +48,6 @@ export interface ResultadoDoLogin {
 
 @Injectable()
 export class AutenticacaoService {
-  // eslint-disable-next-line max-params -- colaboradores injetados pelo Nest
   constructor(
     private readonly prisma: PrismaService,
     private readonly sessoes: SessaoService,
@@ -68,14 +67,20 @@ export class AutenticacaoService {
     );
 
     if (existente !== null) {
-      throw new ConflictException('Já existe uma conta com este e-mail. Entre ou redefina a senha.');
+      throw new ConflictException(
+        'Já existe uma conta com este e-mail. Entre ou redefina a senha.',
+      );
     }
 
     const senhaHash = await gerarHashDeSenha(dto.senha);
 
     const usuario = await this.prisma.db.$transaction(async (tx) => {
       const organizacao = await tx.organizacao.create({
-        data: { nome: dto.nomeOrganizacao, slug: slugUnico(dto.nomeOrganizacao), plano: dto.plano ?? 'basico' },
+        data: {
+          nome: dto.nomeOrganizacao,
+          slug: slugUnico(dto.nomeOrganizacao),
+          plano: dto.plano ?? 'basico',
+        },
       });
 
       const criado = await tx.usuario.create({
@@ -144,15 +149,23 @@ export class AutenticacaoService {
   }
 
   /** O segundo fator: código TOTP de 6 dígitos ou código de recuperação (uso único). */
-  async confirmarMfa(idDaSessao: string, sessao: DadosDaSessao, codigo: string, origem: Origem): Promise<void> {
+  async confirmarMfa(
+    idDaSessao: string,
+    sessao: DadosDaSessao,
+    codigo: string,
+    origem: Origem,
+  ): Promise<void> {
     const chave = `mfa:${sha256(idDaSessao)}`;
 
     await this.limite.verificar(chave, REGRA_DE_MFA);
 
     await executarNoContexto({ organizacaoId: sessao.organizacaoId }, async () => {
-      const usuario = await this.prisma.db.usuario.findUniqueOrThrow({ where: { id: sessao.usuarioId } });
+      const usuario = await this.prisma.db.usuario.findUniqueOrThrow({
+        where: { id: sessao.usuarioId },
+      });
 
-      if (usuario.mfaSegredo === null) throw new BadRequestException('O MFA não está ativo nesta conta.');
+      if (usuario.mfaSegredo === null)
+        throw new BadRequestException('O MFA não está ativo nesta conta.');
 
       const ehRecuperacao = codigo.includes('-');
       let aceito = false;
@@ -163,7 +176,10 @@ export class AutenticacaoService {
         aceito = resultado.aceito;
 
         if (aceito) {
-          await this.prisma.db.usuario.update({ where: { id: usuario.id }, data: { mfaCodigos: resultado.restantes } });
+          await this.prisma.db.usuario.update({
+            where: { id: usuario.id },
+            data: { mfaCodigos: resultado.restantes },
+          });
         }
       } else {
         aceito = this.mfa.conferir(codigo, usuario.mfaSegredo);
@@ -176,7 +192,11 @@ export class AutenticacaoService {
 
       await this.limite.limpar(chave);
       await this.sessoes.atualizar(idDaSessao, { ...sessao, mfaPendente: false });
-      await this.registrarAcesso(usuario, origem, ehRecuperacao ? 'código de recuperação' : 'app autenticador');
+      await this.registrarAcesso(
+        usuario,
+        origem,
+        ehRecuperacao ? 'código de recuperação' : 'app autenticador',
+      );
     });
   }
 
@@ -224,7 +244,12 @@ export class AutenticacaoService {
       include: { usuario: true },
     });
 
-    if (registro === null || registro.usadoEm !== null || registro.expiraEm < new Date() || !registro.usuario.ativo) {
+    if (
+      registro === null ||
+      registro.usadoEm !== null ||
+      registro.expiraEm < new Date() ||
+      !registro.usuario.ativo
+    ) {
       throw new UnprocessableEntityException('Este link expirou ou já foi usado. Peça um novo.');
     }
 
@@ -274,7 +299,10 @@ export class AutenticacaoService {
   }
 
   private async registrarAcesso(usuario: Usuario, origem: Origem, metodo: string): Promise<void> {
-    await this.prisma.db.usuario.update({ where: { id: usuario.id }, data: { ultimoAcessoEm: new Date() } });
+    await this.prisma.db.usuario.update({
+      where: { id: usuario.id },
+      data: { ultimoAcessoEm: new Date() },
+    });
     await this.auditoria.registrar({
       acao: 'login',
       resumo: `${usuario.nome} entrou na plataforma (${metodo}).`,

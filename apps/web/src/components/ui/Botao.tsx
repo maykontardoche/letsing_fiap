@@ -2,13 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
-export type VarianteDeBotao =
-  | 'primario'
-  | 'secundario'
-  | 'fantasma'
-  | 'perigo'
-  | 'claro'
-  | 'vidro';
+export type VarianteDeBotao = 'primario' | 'secundario' | 'fantasma' | 'perigo' | 'claro' | 'vidro';
 export type TamanhoDeBotao = 'sm' | 'md' | 'lg';
 
 const VARIANTES: Record<VarianteDeBotao, string> = {

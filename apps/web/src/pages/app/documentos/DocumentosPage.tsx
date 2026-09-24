@@ -11,7 +11,11 @@ import { Abas, Avatar, BarraDeProgresso, Paginacao } from '@/components/ui/Diver
 import { Carregando, EstadoDeErro, EstadoVazio, Esqueleto } from '@/components/ui/Estados';
 import { EtiquetaDoDocumento } from '@/components/ui/EtiquetaDeStatus';
 import { NIVEIS, STATUS_DO_DOCUMENTO, STATUS_EM_ORDEM } from '@/constants/status';
-import { apiDeDocumentos, type ResumoDoDocumento, type StatusDoDocumento } from '@/lib/api/documentos';
+import {
+  apiDeDocumentos,
+  type ResumoDoDocumento,
+  type StatusDoDocumento,
+} from '@/lib/api/documentos';
 import { useFiltrosNaUrl } from '@/hooks/useFiltrosNaUrl';
 import { formatarData, formatarRelativo } from '@/lib/formatadores';
 
@@ -22,12 +26,24 @@ const ORDENACOES = [
   { id: 'titulo', rotulo: 'Título' },
   { id: 'prazo', rotulo: 'Prazo' },
 ] as const;
+const ORDENACOES_VALIDAS = ORDENACOES.map((o) => o.id);
 
 export function DocumentosPage() {
   const podeCriar = usePode('documentos.criar');
   const navegar = useNavigate();
-  const { filtros, mudar } = useFiltrosNaUrl({ statusValidos: STATUS_EM_ORDEM, ordenacoesValidas: ORDENACOES.map((o) => o.id) });
+  const { filtros, mudar } = useFiltrosNaUrl({
+    statusValidos: STATUS_EM_ORDEM,
+    ordenacoesValidas: ORDENACOES_VALIDAS,
+  });
   const [busca, definirBusca] = useState(filtros.q);
+  const [qDaUrl, definirQDaUrl] = useState(filtros.q);
+
+  // A URL mudou por fora (voltar do navegador, link, "limpar filtros"): o campo acompanha.
+  // Ajuste durante o render, não em efeito — é o padrão que o React recomenda.
+  if (qDaUrl !== filtros.q) {
+    definirQDaUrl(filtros.q);
+    definirBusca(filtros.q);
+  }
 
   // Busca com espera: não dispara uma requisição por tecla.
   useEffect(() => {
@@ -37,8 +53,6 @@ export function DocumentosPage() {
 
     return () => window.clearTimeout(espera);
   }, [busca, filtros.q, mudar]);
-
-  useEffect(() => definirBusca(filtros.q), [filtros.q]);
 
   const consulta = useQuery({
     queryKey: ['documentos', filtros],
@@ -78,12 +92,19 @@ export function DocumentosPage() {
           aoMudar={(id) => mudar({ status: id === 'todos' ? null : id })}
           abas={[
             { id: 'todos' as const, rotulo: 'Todos', contagem: totalGeral },
-            ...STATUS_EM_ORDEM.map((s) => ({ id: s, rotulo: STATUS_DO_DOCUMENTO[s].rotulo, contagem: contagens[s] ?? 0 })),
+            ...STATUS_EM_ORDEM.map((s) => ({
+              id: s,
+              rotulo: STATUS_DO_DOCUMENTO[s].rotulo,
+              contagem: contagens[s] ?? 0,
+            })),
           ]}
         />
         <div className="flex gap-2">
           <div className="relative flex-1 lg:w-72">
-            <Search className="text-tinta-3 pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2" aria-hidden="true" />
+            <Search
+              className="text-tinta-3 pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2"
+              aria-hidden="true"
+            />
             <input
               type="search"
               value={busca}
@@ -93,12 +114,19 @@ export function DocumentosPage() {
               className="border-linha bg-superficie text-tinta placeholder:text-tinta-3 focus:border-destaque focus:ring-destaque/15 h-10 w-full rounded-xl border pr-9 pl-10 text-sm focus:ring-4 focus:outline-none"
             />
             {busca && (
-              <button type="button" onClick={() => definirBusca('')} aria-label="Limpar busca" className="text-tinta-3 hover:text-tinta absolute top-1/2 right-2 -translate-y-1/2 rounded p-1">
+              <button
+                type="button"
+                onClick={() => definirBusca('')}
+                aria-label="Limpar busca"
+                className="text-tinta-3 hover:text-tinta absolute top-1/2 right-2 -translate-y-1/2 rounded p-1"
+              >
                 <X className="size-4" />
               </button>
             )}
           </div>
-          <label className="sr-only" htmlFor="ordenacao">Ordenar por</label>
+          <label className="sr-only" htmlFor="ordenacao">
+            Ordenar por
+          </label>
           <Seletor
             id="ordenacao"
             className="h-10 w-auto"
@@ -109,8 +137,12 @@ export function DocumentosPage() {
             }}
           >
             {ORDENACOES.flatMap((o) => [
-              <option key={`${o.id}:desc`} value={`${o.id}:desc`}>{o.rotulo} ↓</option>,
-              <option key={`${o.id}:asc`} value={`${o.id}:asc`}>{o.rotulo} ↑</option>,
+              <option key={`${o.id}:desc`} value={`${o.id}:desc`}>
+                {o.rotulo} ↓
+              </option>,
+              <option key={`${o.id}:asc`} value={`${o.id}:asc`}>
+                {o.rotulo} ↑
+              </option>,
             ])}
           </Seletor>
         </div>
@@ -134,25 +166,41 @@ export function DocumentosPage() {
           </Carregando>
         )}
 
-        {consulta.isError && <EstadoDeErro erro={consulta.error} aoTentarDeNovo={() => void consulta.refetch()} />}
+        {consulta.isError && (
+          <EstadoDeErro erro={consulta.error} aoTentarDeNovo={() => void consulta.refetch()} />
+        )}
 
-        {consulta.data && consulta.data.itens.length === 0 && (
-          filtros.q || filtros.status ? (
+        {consulta.data &&
+          consulta.data.itens.length === 0 &&
+          (filtros.q || filtros.status ? (
             <EstadoVazio
               icone={<FileSearch />}
               titulo="Nada encontrado com esses filtros"
               descricao="Tente outro termo de busca ou veja todos os status."
-              acao={<button type="button" className={estilosDeBotao('secundario')} onClick={() => mudar({ q: '', status: null })}>Limpar filtros</button>}
+              acao={
+                <button
+                  type="button"
+                  className={estilosDeBotao('secundario')}
+                  onClick={() => mudar({ q: '', status: null })}
+                >
+                  Limpar filtros
+                </button>
+              }
             />
           ) : (
             <EstadoVazio
               icone={<FileText />}
               titulo="Nenhum documento ainda"
               descricao="Envie um PDF, convide quem assina e acompanhe tudo por aqui."
-              acao={podeCriar && <Link to="/app/documentos/novo" className={estilosDeBotao('primario')}><Plus className="size-4" /> Novo documento</Link>}
+              acao={
+                podeCriar && (
+                  <Link to="/app/documentos/novo" className={estilosDeBotao('primario')}>
+                    <Plus className="size-4" /> Novo documento
+                  </Link>
+                )
+              }
             />
-          )
-        )}
+          ))}
 
         {consulta.data && consulta.data.itens.length > 0 && (
           <>
@@ -160,9 +208,15 @@ export function DocumentosPage() {
               <caption className="sr-only">Documentos</caption>
               <thead className="bg-superficie-2/60 border-linha border-b">
                 <tr className="text-tinta-3 text-left text-xs font-semibold tracking-wide uppercase">
-                  <th scope="col" className="px-5 py-3">Documento</th>
-                  <th scope="col" className="px-5 py-3">Status</th>
-                  <th scope="col" className="px-5 py-3">Assinaturas</th>
+                  <th scope="col" className="px-5 py-3">
+                    Documento
+                  </th>
+                  <th scope="col" className="px-5 py-3">
+                    Status
+                  </th>
+                  <th scope="col" className="px-5 py-3">
+                    Assinaturas
+                  </th>
                   <th scope="col" className="px-5 py-3">
                     <span className="inline-flex items-center gap-1">
                       <ArrowDownUp className="size-3" aria-hidden="true" />
@@ -173,7 +227,12 @@ export function DocumentosPage() {
               </thead>
               <tbody className="divide-linha divide-y">
                 {consulta.data.itens.map((doc) => (
-                  <LinhaDoDocumento key={doc.uuid} documento={doc} ordenacao={filtros.ordenar} aoAbrir={() => navegar(`/app/documentos/${doc.uuid}`)} />
+                  <LinhaDoDocumento
+                    key={doc.uuid}
+                    documento={doc}
+                    ordenacao={filtros.ordenar}
+                    aoAbrir={() => navegar(`/app/documentos/${doc.uuid}`)}
+                  />
                 ))}
               </tbody>
             </table>
@@ -181,7 +240,10 @@ export function DocumentosPage() {
             <ul className="divide-linha divide-y md:hidden">
               {consulta.data.itens.map((doc) => (
                 <li key={doc.uuid}>
-                  <Link to={`/app/documentos/${doc.uuid}`} className="hover:bg-superficie-2 block space-y-3 p-4">
+                  <Link
+                    to={`/app/documentos/${doc.uuid}`}
+                    className="hover:bg-superficie-2 block space-y-3 p-4"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-tinta truncate font-semibold">{doc.titulo}</p>
@@ -199,16 +261,31 @@ export function DocumentosPage() {
       </Cartao>
 
       {consulta.data && (
-        <Paginacao pagina={consulta.data.pagina} porPagina={consulta.data.porPagina} total={consulta.data.total} aoMudar={(pagina) => mudar({ pagina })} />
+        <Paginacao
+          pagina={consulta.data.pagina}
+          porPagina={consulta.data.porPagina}
+          total={consulta.data.total}
+          aoMudar={(pagina) => mudar({ pagina })}
+        />
       )}
     </>
   );
 }
 
-function LinhaDoDocumento({ documento, ordenacao, aoAbrir }: { readonly documento: ResumoDoDocumento; readonly ordenacao: string; readonly aoAbrir: () => void }) {
+function LinhaDoDocumento({
+  documento,
+  ordenacao,
+  aoAbrir,
+}: {
+  readonly documento: ResumoDoDocumento;
+  readonly ordenacao: string;
+  readonly aoAbrir: () => void;
+}) {
   const data =
     ordenacao === 'prazo'
-      ? documento.prazo ? `Prazo ${formatarData(documento.prazo)}` : 'Sem prazo'
+      ? documento.prazo
+        ? `Prazo ${formatarData(documento.prazo)}`
+        : 'Sem prazo'
       : ordenacao === 'atualizadoEm'
         ? formatarRelativo(documento.atualizadoEm)
         : formatarData(documento.criadoEm);
@@ -217,14 +294,21 @@ function LinhaDoDocumento({ documento, ordenacao, aoAbrir }: { readonly document
     <tr onClick={aoAbrir} className="hover:bg-superficie-2/60 cursor-pointer transition">
       <td className="px-5 py-4">
         {/* O link é o alvo acessível; a linha inteira clicável é só conveniência de mouse. */}
-        <Link to={`/app/documentos/${documento.uuid}`} onClick={(e) => e.stopPropagation()} className="group flex items-center gap-3.5">
+        <Link
+          to={`/app/documentos/${documento.uuid}`}
+          onClick={(e) => e.stopPropagation()}
+          className="group flex items-center gap-3.5"
+        >
           <span className="bg-destaque-suave text-destaque flex size-10 shrink-0 items-center justify-center rounded-xl">
             <FileText className="size-5" aria-hidden="true" />
           </span>
           <span className="min-w-0">
-            <span className="text-tinta group-hover:text-destaque block max-w-md truncate font-semibold transition">{documento.titulo}</span>
+            <span className="text-tinta group-hover:text-destaque block max-w-md truncate font-semibold transition">
+              {documento.titulo}
+            </span>
             <span className="text-tinta-3 block text-xs">
-              <span className="font-mono">{documento.codigo}</span> · {NIVEIS[documento.nivelVerificacao].rotulo} · por {documento.criadoPor.nome}
+              <span className="font-mono">{documento.codigo}</span> ·{' '}
+              {NIVEIS[documento.nivelVerificacao].rotulo} · por {documento.criadoPor.nome}
             </span>
           </span>
         </Link>
@@ -248,12 +332,19 @@ function Progresso({ documento }: { readonly documento: ResumoDoDocumento }) {
       <div className="flex -space-x-2">
         {documento.signatarios.slice(0, 4).map((s, i) => (
           <span key={i} title={s.nome} className="ring-superficie rounded-full ring-2">
-            <Avatar nome={s.nome} tamanho="sm" className={s.status === 'assinado' ? '' : 'opacity-45 grayscale'} />
+            <Avatar
+              nome={s.nome}
+              tamanho="sm"
+              className={s.status === 'assinado' ? '' : 'opacity-45 grayscale'}
+            />
           </span>
         ))}
       </div>
       <div className="min-w-0 flex-1">
-        <BarraDeProgresso valor={total === 0 ? 0 : assinados / total} rotulo={`${assinados} de ${total} assinaturas`} />
+        <BarraDeProgresso
+          valor={total === 0 ? 0 : assinados / total}
+          rotulo={`${assinados} de ${total} assinaturas`}
+        />
         <p className="text-tinta-3 mt-1 text-xs numeros">
           {assinados}/{total} assinaturas
         </p>

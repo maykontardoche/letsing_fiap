@@ -6,7 +6,10 @@ import { cn } from '@/lib/cn';
 
 export function Planos() {
   return (
-    <section id="planos" className="bg-superficie border-linha scroll-mt-20 border-y py-24 sm:py-32">
+    <section
+      id="planos"
+      className="bg-superficie border-linha scroll-mt-20 border-y py-24 sm:py-32"
+    >
       <div className="mx-auto max-w-7xl px-5 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-destaque text-sm font-semibold tracking-wider uppercase">Planos</p>
@@ -45,11 +48,18 @@ export function Planos() {
               </p>
 
               <p className="mt-6 flex items-baseline gap-1">
-                <span className={cn('font-display text-4xl font-extrabold', plano.destaque ? 'text-white' : 'text-tinta')}>
+                <span
+                  className={cn(
+                    'font-display text-4xl font-extrabold',
+                    plano.destaque ? 'text-white' : 'text-tinta',
+                  )}
+                >
                   {plano.preco}
                 </span>
                 {plano.periodo && (
-                  <span className={plano.destaque ? 'text-white/60' : 'text-tinta-3'}>{plano.periodo}</span>
+                  <span className={plano.destaque ? 'text-white/60' : 'text-tinta-3'}>
+                    {plano.periodo}
+                  </span>
                 )}
               </p>
 
@@ -57,17 +67,25 @@ export function Planos() {
                 {plano.recursos.map((recurso) => (
                   <li key={recurso} className="flex items-start gap-3 text-sm">
                     <Check
-                      className={cn('mt-0.5 size-4 shrink-0', plano.destaque ? 'text-ciano-300' : 'text-destaque')}
+                      className={cn(
+                        'mt-0.5 size-4 shrink-0',
+                        plano.destaque ? 'text-ciano-300' : 'text-destaque',
+                      )}
                       aria-hidden="true"
                     />
-                    <span className={plano.destaque ? 'text-white/85' : 'text-tinta-2'}>{recurso}</span>
+                    <span className={plano.destaque ? 'text-white/85' : 'text-tinta-2'}>
+                      {recurso}
+                    </span>
                   </li>
                 ))}
               </ul>
 
               <Link
                 to={`/cadastro?plano=${plano.id}`}
-                className={cn(estilosDeBotao(plano.destaque ? 'claro' : 'secundario', 'lg'), 'mt-10 w-full')}
+                className={cn(
+                  estilosDeBotao(plano.destaque ? 'claro' : 'secundario', 'lg'),
+                  'mt-10 w-full',
+                )}
               >
                 {plano.chamada}
               </Link>

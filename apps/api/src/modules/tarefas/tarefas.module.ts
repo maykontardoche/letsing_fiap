@@ -38,17 +38,26 @@ export class TarefasService {
 
   async expirar(agora: Date): Promise<number> {
     const vencidos = await semEscopoDeOrganizacao(() =>
-      this.prisma.db.documento.findMany({ where: { status: 'em_andamento', prazo: { lt: agora } }, select: { id: true, uuid: true, organizacaoId: true } }),
+      this.prisma.db.documento.findMany({
+        where: { status: 'em_andamento', prazo: { lt: agora } },
+        select: { id: true, uuid: true, organizacaoId: true },
+      }),
     );
 
     for (const documento of vencidos) {
       await executarNoContexto({ organizacaoId: documento.organizacaoId }, () =>
         this.prisma.db.$transaction(async (tx) => {
-          const { count } = await tx.documento.updateMany({ where: { id: documento.id, status: 'em_andamento' }, data: { status: 'expirado' } });
+          const { count } = await tx.documento.updateMany({
+            where: { id: documento.id, status: 'em_andamento' },
+            data: { status: 'expirado' },
+          });
 
           if (count === 0) return;
 
-          await tx.signatario.updateMany({ where: { documentoId: documento.id }, data: { tokenHash: null } });
+          await tx.signatario.updateMany({
+            where: { documentoId: documento.id },
+            data: { tokenHash: null },
+          });
           await this.auditoria.registrar(
             {
               acao: 'documento_expirado',
@@ -85,9 +94,14 @@ export class TarefasService {
 
     for (const documento of prontos) {
       try {
-        await executarNoContexto({ organizacaoId: documento.organizacaoId }, () => this.finalizador.finalizarSePronto(documento.id));
+        await executarNoContexto({ organizacaoId: documento.organizacaoId }, () =>
+          this.finalizador.finalizarSePronto(documento.id),
+        );
       } catch (erro) {
-        this.logger.error(`Falha ao concluir o documento ${documento.id}.`, erro instanceof Error ? erro.stack : String(erro));
+        this.logger.error(
+          `Falha ao concluir o documento ${documento.id}.`,
+          erro instanceof Error ? erro.stack : String(erro),
+        );
       }
     }
   }

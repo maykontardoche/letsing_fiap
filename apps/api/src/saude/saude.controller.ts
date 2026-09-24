@@ -29,8 +29,14 @@ export class SaudeController {
 
   @Get('pronto')
   async pronto() {
-    const [banco, redis] = await Promise.all([this.checar(() => this.prisma.db.$queryRaw`SELECT 1`), this.checar(() => this.redis.cliente.ping())]);
-    const corpo = { status: banco === 'up' && redis === 'up' ? 'ok' : 'erro', detalhes: { banco, redis } };
+    const [banco, redis] = await Promise.all([
+      this.checar(() => this.prisma.db.$queryRaw`SELECT 1`),
+      this.checar(() => this.redis.cliente.ping()),
+    ]);
+    const corpo = {
+      status: banco === 'up' && redis === 'up' ? 'ok' : 'erro',
+      detalhes: { banco, redis },
+    };
 
     if (corpo.status !== 'ok') throw new ServiceUnavailableException(corpo);
 

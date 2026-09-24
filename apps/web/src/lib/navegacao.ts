@@ -6,5 +6,10 @@
  * clone que pede "confirme sua senha de novo". `//evil.com` também é externo.
  */
 export function destinoSeguro(bruto: string | null, padrao = '/app'): string {
-  return bruto !== null && bruto.startsWith('/') && !bruto.startsWith('//') && !bruto.startsWith('/\\') ? bruto : padrao;
+  return bruto !== null &&
+    bruto.startsWith('/') &&
+    !bruto.startsWith('//') &&
+    !bruto.startsWith('/\\')
+    ? bruto
+    : padrao;
 }

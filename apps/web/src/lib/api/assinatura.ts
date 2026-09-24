@@ -1,5 +1,10 @@
 import { http, urlDaApi } from '@/lib/http';
-import type { NivelDeVerificacao, StatusDoDocumento, StatusDoSignatario, TipoDeVerificacao } from './documentos';
+import type {
+  NivelDeVerificacao,
+  StatusDoDocumento,
+  StatusDoSignatario,
+  TipoDeVerificacao,
+} from './documentos';
 
 export interface SessaoDeAssinatura {
   readonly documento: {
@@ -27,8 +32,16 @@ export interface SessaoDeAssinatura {
     readonly cpfInformado: boolean;
   };
   readonly ehSuaVez: boolean;
-  readonly verificacoes: readonly { readonly tipo: TipoDeVerificacao; readonly aprovada: boolean }[];
-  readonly participantes: readonly { readonly nome: string; readonly ordem: number; readonly status: StatusDoSignatario; readonly voce: boolean }[];
+  readonly verificacoes: readonly {
+    readonly tipo: TipoDeVerificacao;
+    readonly aprovada: boolean;
+  }[];
+  readonly participantes: readonly {
+    readonly nome: string;
+    readonly ordem: number;
+    readonly status: StatusDoSignatario;
+    readonly voce: boolean;
+  }[];
 }
 
 export type Gesto = 'Open_Palm' | 'Closed_Fist' | 'Pointing_Up' | 'Thumb_Up' | 'Victory';
@@ -56,24 +69,45 @@ export function apiDeAssinatura(token: string) {
     urlDoArquivo: (versao: 'original' | 'assinado', baixar = false) =>
       urlDaApi(`${base}/arquivo?versao=${versao}${baixar ? '&baixar=1' : ''}`),
 
-    iniciarCodigo: () => http.post<Desafio & { enviadoPara: string }>(`${base}/verificacoes/codigo_email/iniciar`),
+    iniciarCodigo: () =>
+      http.post<Desafio & { enviadoPara: string }>(`${base}/verificacoes/codigo_email/iniciar`),
     concluirCodigo: (desafio: string, codigo: string) =>
-      http.post<{ aprovado: boolean }>(`${base}/verificacoes/codigo_email/concluir`, { desafio, codigo }),
+      http.post<{ aprovado: boolean }>(`${base}/verificacoes/codigo_email/concluir`, {
+        desafio,
+        codigo,
+      }),
 
-    iniciarFacial: () => http.post<Desafio & { acoes: AcaoDeVivacidade[] }>(`${base}/verificacoes/facial/iniciar`),
+    iniciarFacial: () =>
+      http.post<Desafio & { acoes: AcaoDeVivacidade[] }>(`${base}/verificacoes/facial/iniciar`),
     concluirFacial: (desafio: string, medicao: MedicaoFacial) =>
-      http.post<{ aprovado: boolean; pontuacao: number }>(`${base}/verificacoes/facial/concluir`, { desafio, medicao }),
+      http.post<{ aprovado: boolean; pontuacao: number }>(`${base}/verificacoes/facial/concluir`, {
+        desafio,
+        medicao,
+      }),
 
-    iniciarVoz: () => http.post<Desafio & { palavras: string[] }>(`${base}/verificacoes/voz/iniciar`),
+    iniciarVoz: () =>
+      http.post<Desafio & { palavras: string[] }>(`${base}/verificacoes/voz/iniciar`),
     concluirVoz: (desafio: string, transcricao: string) =>
-      http.post<{ aprovado: boolean; pontuacao: number }>(`${base}/verificacoes/voz/concluir`, { desafio, transcricao }),
+      http.post<{ aprovado: boolean; pontuacao: number }>(`${base}/verificacoes/voz/concluir`, {
+        desafio,
+        transcricao,
+      }),
 
-    iniciarGestos: () => http.post<Desafio & { sequencia: Gesto[] }>(`${base}/verificacoes/gestos/iniciar`),
+    iniciarGestos: () =>
+      http.post<Desafio & { sequencia: Gesto[] }>(`${base}/verificacoes/gestos/iniciar`),
     concluirGestos: (desafio: string, gestos: Gesto[], confiancas: number[]) =>
-      http.post<{ aprovado: boolean; pontuacao: number }>(`${base}/verificacoes/gestos/concluir`, { desafio, gestos, confiancas }),
+      http.post<{ aprovado: boolean; pontuacao: number }>(`${base}/verificacoes/gestos/concluir`, {
+        desafio,
+        gestos,
+        confiancas,
+      }),
 
-    assinar: (dados: { tipo: 'desenhada' | 'digitada'; imagem: string; aceite: true; cpf?: string }) =>
-      http.post<{ concluido: boolean }>(`${base}/assinar`, dados),
+    assinar: (dados: {
+      tipo: 'desenhada' | 'digitada';
+      imagem: string;
+      aceite: true;
+      cpf?: string;
+    }) => http.post<{ concluido: boolean }>(`${base}/assinar`, dados),
     recusar: (motivo: string) => http.post<void>(`${base}/recusar`, { motivo }),
   };
 }

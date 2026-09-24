@@ -1,6 +1,7 @@
 import { http, urlDaApi } from '@/lib/http';
 
-export type StatusDoDocumento = 'rascunho' | 'em_andamento' | 'concluido' | 'cancelado' | 'recusado' | 'expirado';
+export type StatusDoDocumento =
+  'rascunho' | 'em_andamento' | 'concluido' | 'cancelado' | 'recusado' | 'expirado';
 export type StatusDoSignatario = 'pendente' | 'visualizado' | 'assinado' | 'recusado';
 export type NivelDeVerificacao = 'simples' | 'biometrico' | 'completo';
 export type TipoDeVerificacao = 'codigo_email' | 'facial' | 'voz' | 'gestos';
@@ -34,7 +35,12 @@ export interface SignatarioDoDetalhe {
   readonly recusadoEm: string | null;
   readonly motivoRecusa: string | null;
   readonly tipoAssinatura: 'desenhada' | 'digitada' | null;
-  readonly verificacoes: readonly { readonly tipo: TipoDeVerificacao; readonly aprovada: boolean; readonly concluidaEm: string | null; readonly pontuacao: number | null }[];
+  readonly verificacoes: readonly {
+    readonly tipo: TipoDeVerificacao;
+    readonly aprovada: boolean;
+    readonly concluidaEm: string | null;
+    readonly pontuacao: number | null;
+  }[];
 }
 
 export interface DetalheDoDocumento extends Omit<ResumoDoDocumento, 'signatarios' | 'criadoPor'> {
@@ -114,16 +120,32 @@ export const apiDeDocumentos = {
 
     return http.post<DetalheDoDocumento>('/documentos', formulario);
   },
-  atualizar: (uuid: string, dados: { titulo?: string; mensagem?: string | null; nivelVerificacao?: NivelDeVerificacao; ordemSequencial?: boolean; prazo?: string | null }) =>
-    http.patch<DetalheDoDocumento>(`/documentos/${uuid}`, dados),
-  definirSignatarios: (uuid: string, signatarios: readonly { nome: string; email: string; cpf?: string }[]) =>
-    http.put<DetalheDoDocumento>(`/documentos/${uuid}/signatarios`, { signatarios }),
+  atualizar: (
+    uuid: string,
+    dados: {
+      titulo?: string;
+      mensagem?: string | null;
+      nivelVerificacao?: NivelDeVerificacao;
+      ordemSequencial?: boolean;
+      prazo?: string | null;
+    },
+  ) => http.patch<DetalheDoDocumento>(`/documentos/${uuid}`, dados),
+  definirSignatarios: (
+    uuid: string,
+    signatarios: readonly { nome: string; email: string; cpf?: string }[],
+  ) => http.put<DetalheDoDocumento>(`/documentos/${uuid}/signatarios`, { signatarios }),
   enviar: (uuid: string) => http.post<DetalheDoDocumento>(`/documentos/${uuid}/enviar`),
-  cancelar: (uuid: string, motivo: string) => http.post<DetalheDoDocumento>(`/documentos/${uuid}/cancelar`, { motivo }),
+  cancelar: (uuid: string, motivo: string) =>
+    http.post<DetalheDoDocumento>(`/documentos/${uuid}/cancelar`, { motivo }),
   excluir: (uuid: string) => http.delete<void>(`/documentos/${uuid}`),
-  reenviar: (uuid: string, signatario: string) => http.post<{ link: string }>(`/documentos/${uuid}/signatarios/${signatario}/reenviar`),
-  assinarAgora: (uuid: string) => http.post<{ caminho: string }>(`/documentos/${uuid}/assinar-agora`),
-  trilha: (uuid: string) => http.get<{ integridade: Integridade; eventos: readonly EventoDaTrilha[] }>(`/documentos/${uuid}/trilha`),
+  reenviar: (uuid: string, signatario: string) =>
+    http.post<{ link: string }>(`/documentos/${uuid}/signatarios/${signatario}/reenviar`),
+  assinarAgora: (uuid: string) =>
+    http.post<{ caminho: string }>(`/documentos/${uuid}/assinar-agora`),
+  trilha: (uuid: string) =>
+    http.get<{ integridade: Integridade; eventos: readonly EventoDaTrilha[] }>(
+      `/documentos/${uuid}/trilha`,
+    ),
   urlDoArquivo: (uuid: string, versao: 'original' | 'assinado', baixar = false) =>
     urlDaApi(`/documentos/${uuid}/arquivo?versao=${versao}${baixar ? '&baixar=1' : ''}`),
 };

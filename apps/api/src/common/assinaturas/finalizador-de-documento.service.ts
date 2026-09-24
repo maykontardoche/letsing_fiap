@@ -42,7 +42,6 @@ const VALIDADE_POS_CONCLUSAO_MS = 30 * 24 * 60 * 60 * 1000;
 export class FinalizadorDeDocumentoService {
   private readonly logger = new Logger(FinalizadorDeDocumentoService.name);
 
-  // eslint-disable-next-line max-params -- colaboradores injetados pelo Nest; não há ponto de chamada posicional
   constructor(
     private readonly prisma: PrismaService,
     private readonly armazenamento: ArmazenamentoService,
@@ -57,14 +56,20 @@ export class FinalizadorDeDocumentoService {
     const documento = await this.prisma.db.documento.findUnique({
       where: { id: documentoId },
       include: {
-        signatarios: { orderBy: { ordem: 'asc' }, include: { desafios: { where: { aprovado: true } } } },
+        signatarios: {
+          orderBy: { ordem: 'asc' },
+          include: { desafios: { where: { aprovado: true } } },
+        },
         criadoPor: true,
         organizacao: true,
       },
     });
 
     if (documento === null || documento.status !== 'em_andamento') return false;
-    if (documento.signatarios.length === 0 || documento.signatarios.some((s) => s.status !== 'assinado')) {
+    if (
+      documento.signatarios.length === 0 ||
+      documento.signatarios.some((s) => s.status !== 'assinado')
+    ) {
       return false;
     }
 
@@ -80,8 +85,17 @@ export class FinalizadorDeDocumentoService {
 
     const evidencias = jsonCanonico({
       versao: 1,
-      documento: { uuid: documento.uuid, codigo: documento.codigo, titulo: documento.titulo, hashOriginal: documento.hashOriginal },
-      chavePublica: { algoritmo: 'Ed25519', id: assinador.idDaChave, pem: assinador.chavePublicaPem },
+      documento: {
+        uuid: documento.uuid,
+        codigo: documento.codigo,
+        titulo: documento.titulo,
+        hashOriginal: documento.hashOriginal,
+      },
+      chavePublica: {
+        algoritmo: 'Ed25519',
+        id: assinador.idDaChave,
+        pem: assinador.chavePublicaPem,
+      },
       assinaturas: documento.signatarios.map((s) => ({
         signatario: s.uuid,
         carga: s.cargaAssinada,
@@ -185,24 +199,39 @@ export class FinalizadorDeDocumentoService {
     }
 
     await this.avisarConclusao(documento, bytes, urlDeValidacao);
-    this.logger.log(`Documento ${documento.codigo} concluído (sha256 ${hashAssinado.slice(0, 12)}…).`);
+    this.logger.log(
+      `Documento ${documento.codigo} concluído (sha256 ${hashAssinado.slice(0, 12)}…).`,
+    );
 
     return true;
   }
 
   private async avisarConclusao(
-    documento: { uuid: string; titulo: string; codigo: string; criadoPor: { nome: string; email: string }; signatarios: { nome: string; email: string }[] },
+    documento: {
+      uuid: string;
+      titulo: string;
+      codigo: string;
+      criadoPor: { nome: string; email: string };
+      signatarios: { nome: string; email: string }[];
+    },
     bytes: Uint8Array,
     urlDeValidacao: string,
   ): Promise<void> {
     const anexos =
       bytes.length <= LIMITE_DO_ANEXO
-        ? [{ nome: `${nomeDeArquivo(documento.titulo)}-assinado.pdf`, conteudoBase64: Buffer.from(bytes).toString('base64'), tipo: 'application/pdf' }]
+        ? [
+            {
+              nome: `${nomeDeArquivo(documento.titulo)}-assinado.pdf`,
+              conteudoBase64: Buffer.from(bytes).toString('base64'),
+              tipo: 'application/pdf',
+            },
+          ]
         : undefined;
 
     const destinatarios = new Map<string, { nome: string; url: string }>();
 
-    for (const s of documento.signatarios) destinatarios.set(s.email, { nome: s.nome, url: urlDeValidacao });
+    for (const s of documento.signatarios)
+      destinatarios.set(s.email, { nome: s.nome, url: urlDeValidacao });
 
     destinatarios.set(documento.criadoPor.email, {
       nome: documento.criadoPor.nome,
@@ -211,7 +240,13 @@ export class FinalizadorDeDocumentoService {
 
     for (const [para, { nome, url }] of destinatarios) {
       await this.email.enfileirar({
-        ...modelos.documentoConcluido({ para, nome, titulo: documento.titulo, url, codigo: documento.codigo }),
+        ...modelos.documentoConcluido({
+          para,
+          nome,
+          titulo: documento.titulo,
+          url,
+          codigo: documento.codigo,
+        }),
         anexos,
       });
     }

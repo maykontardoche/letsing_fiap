@@ -96,7 +96,9 @@ export class AssinarDto {
 
   @IsString()
   @MaxLength(LIMITE_DA_IMAGEM, { message: 'A imagem da assinatura é grande demais.' })
-  @Matches(/^data:image\/png;base64,[A-Za-z0-9+/=]+$/, { message: 'Imagem de assinatura inválida.' })
+  @Matches(/^data:image\/png;base64,[A-Za-z0-9+/=]+$/, {
+    message: 'Imagem de assinatura inválida.',
+  })
   imagem!: string;
 
   /** Concordância explícita com o conteúdo — sem isso, não há manifestação de vontade. */

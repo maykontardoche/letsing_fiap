@@ -43,7 +43,9 @@ export function useCamera() {
       definirEstado('ligada');
       return true;
     } catch (erro) {
-      definirEstado(erro instanceof DOMException && erro.name === 'NotAllowedError' ? 'negada' : 'indisponivel');
+      definirEstado(
+        erro instanceof DOMException && erro.name === 'NotAllowedError' ? 'negada' : 'indisponivel',
+      );
       return false;
     }
   }, []);
@@ -54,6 +56,8 @@ export function useCamera() {
 }
 
 export const MENSAGEM_DA_CAMERA: Record<'negada' | 'indisponivel', string> = {
-  negada: 'O acesso à câmera foi negado. Clique no ícone de cadeado da barra de endereço, permita a câmera e tente de novo.',
-  indisponivel: 'Não encontramos uma câmera disponível. Verifique se outro aplicativo está usando a câmera.',
+  negada:
+    'O acesso à câmera foi negado. Clique no ícone de cadeado da barra de endereço, permita a câmera e tente de novo.',
+  indisponivel:
+    'Não encontramos uma câmera disponível. Verifique se outro aplicativo está usando a câmera.',
 };

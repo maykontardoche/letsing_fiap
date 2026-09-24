@@ -37,7 +37,9 @@ export function Perguntas() {
       <div className="mx-auto max-w-3xl px-5 lg:px-8">
         <div className="text-center">
           <p className="text-destaque text-sm font-semibold tracking-wider uppercase">Dúvidas</p>
-          <h2 className="text-tinta mt-3 text-3xl font-extrabold sm:text-4xl">Perguntas frequentes</h2>
+          <h2 className="text-tinta mt-3 text-3xl font-extrabold sm:text-4xl">
+            Perguntas frequentes
+          </h2>
         </div>
 
         {/* `<details>` nativo: acessível por teclado e leitor de tela sem nenhum JavaScript. */}
@@ -68,9 +70,12 @@ export function ChamadaFinal() {
     <section className="px-5 pb-24 sm:pb-32 lg:px-8">
       <div className="bg-gradiente-marca-texto relative isolate mx-auto max-w-5xl overflow-hidden rounded-[2rem] px-8 py-16 text-center text-white shadow-brilho sm:px-16">
         <div aria-hidden="true" className="grade-de-fundo absolute inset-0 -z-10 opacity-60" />
-        <h2 className="text-3xl font-extrabold sm:text-4xl">Seu próximo contrato merece mais que um rabisco.</h2>
+        <h2 className="text-3xl font-extrabold sm:text-4xl">
+          Seu próximo contrato merece mais que um rabisco.
+        </h2>
         <p className="mx-auto mt-4 max-w-xl text-lg text-white/80">
-          Crie sua conta em menos de um minuto. Os 10 primeiros documentos do mês são por nossa conta.
+          Crie sua conta em menos de um minuto. Os 10 primeiros documentos do mês são por nossa
+          conta.
         </p>
         <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
           <Link to="/cadastro" className={estilosDeBotao('claro', 'lg')}>
@@ -100,24 +105,56 @@ export function Rodape() {
         <nav aria-label="Produto">
           <p className="text-sm font-semibold text-white">Produto</p>
           <ul className="mt-4 space-y-2.5 text-sm">
-            <li><a href="/#como-funciona" className="hover:text-white">Como funciona</a></li>
-            <li><a href="/#biometria" className="hover:text-white">Biometria</a></li>
-            <li><a href="/#planos" className="hover:text-white">Planos</a></li>
+            <li>
+              <a href="/#como-funciona" className="hover:text-white">
+                Como funciona
+              </a>
+            </li>
+            <li>
+              <a href="/#biometria" className="hover:text-white">
+                Biometria
+              </a>
+            </li>
+            <li>
+              <a href="/#planos" className="hover:text-white">
+                Planos
+              </a>
+            </li>
           </ul>
         </nav>
         <nav aria-label="Confiança">
           <p className="text-sm font-semibold text-white">Confiança</p>
           <ul className="mt-4 space-y-2.5 text-sm">
-            <li><Link to="/validar" className="hover:text-white">Validar documento</Link></li>
-            <li><a href="/#seguranca" className="hover:text-white">Segurança</a></li>
-            <li><a href="/#perguntas" className="hover:text-white">Perguntas frequentes</a></li>
+            <li>
+              <Link to="/validar" className="hover:text-white">
+                Validar documento
+              </Link>
+            </li>
+            <li>
+              <a href="/#seguranca" className="hover:text-white">
+                Segurança
+              </a>
+            </li>
+            <li>
+              <a href="/#perguntas" className="hover:text-white">
+                Perguntas frequentes
+              </a>
+            </li>
           </ul>
         </nav>
         <nav aria-label="Conta">
           <p className="text-sm font-semibold text-white">Conta</p>
           <ul className="mt-4 space-y-2.5 text-sm">
-            <li><Link to="/entrar" className="hover:text-white">Entrar</Link></li>
-            <li><Link to="/cadastro" className="hover:text-white">Criar conta</Link></li>
+            <li>
+              <Link to="/entrar" className="hover:text-white">
+                Entrar
+              </Link>
+            </li>
+            <li>
+              <Link to="/cadastro" className="hover:text-white">
+                Criar conta
+              </Link>
+            </li>
           </ul>
         </nav>
       </div>

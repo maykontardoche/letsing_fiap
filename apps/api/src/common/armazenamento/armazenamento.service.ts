@@ -22,7 +22,11 @@ export class ArmazenamentoService {
     this.raiz = resolve(env.diretorioDeArmazenamento);
   }
 
-  static chaveDoDocumento(organizacaoId: number, uuid: string, versao: 'original' | 'assinado'): string {
+  static chaveDoDocumento(
+    organizacaoId: number,
+    uuid: string,
+    versao: 'original' | 'assinado',
+  ): string {
     return `org-${organizacaoId}/documentos/${uuid}/${versao}.pdf`;
   }
 

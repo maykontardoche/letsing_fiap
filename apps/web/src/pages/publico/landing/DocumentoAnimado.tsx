@@ -132,7 +132,9 @@ export function DocumentoAnimado() {
                     transition={{ duration: assinado ? 1.2 : 0.3, ease: 'easeInOut' }}
                   />
                 </svg>
-                <p className="mt-1 text-[11px] text-slate-500">Mariana Albuquerque · CPF •••.•••.•••-42</p>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Mariana Albuquerque · CPF •••.•••.•••-42
+                </p>
               </div>
               <motion.div
                 animate={{ scale: assinado ? 1 : 0.85, opacity: assinado ? 1 : 0.35 }}
@@ -166,15 +168,15 @@ export function DocumentoAnimado() {
 
 /** Um QR decorativo determinístico — não codifica nada, só dá a forma. */
 function MiniQr() {
-  const celulas = [
-    '1110111', '1010101', '1110111', '0001000', '1011101', '0110110', '1101011',
-  ];
+  const celulas = ['1110111', '1010101', '1110111', '0001000', '1011101', '0110110', '1101011'];
 
   return (
     <svg viewBox="0 0 7 7" className="size-11" shapeRendering="crispEdges">
       {celulas.flatMap((linha, y) =>
         [...linha].map((valor, x) =>
-          valor === '1' ? <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill="#0a0e1c" /> : null,
+          valor === '1' ? (
+            <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill="#0a0e1c" />
+          ) : null,
         ),
       )}
     </svg>

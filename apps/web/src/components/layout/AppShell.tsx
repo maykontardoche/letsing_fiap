@@ -53,11 +53,16 @@ const MENU: readonly ItemDoMenu[] = [
  */
 export function AppShell() {
   const perfil = usePerfil();
-  const [menuAberto, definirMenuAberto] = useState(false);
   const local = useLocation();
-  const itens = MENU.filter((item) => item.exige === undefined || perfil.permissoes.includes(item.exige));
-
-  useEffect(() => definirMenuAberto(false), [local.pathname]);
+  // O menu móvel lembra EM QUE PÁGINA foi aberto: ao navegar, o caminho muda e ele
+  // fecha sozinho — sem efeito para "reagir" à navegação.
+  const [menuAbertoEm, definirMenuAbertoEm] = useState<string | null>(null);
+  const menuAberto = menuAbertoEm === local.pathname;
+  const definirMenuAberto = (aberto: boolean) =>
+    definirMenuAbertoEm(aberto ? local.pathname : null);
+  const itens = MENU.filter(
+    (item) => item.exige === undefined || perfil.permissoes.includes(item.exige),
+  );
 
   const barra = (
     <div className="flex h-full flex-col">
@@ -69,7 +74,10 @@ export function AppShell() {
 
       {perfil.permissoes.includes('documentos.criar') && (
         <div className="px-4 pt-2 pb-4">
-          <Link to="/app/documentos/novo" className={cn(estilosDeBotao('primario', 'md'), 'w-full')}>
+          <Link
+            to="/app/documentos/novo"
+            className={cn(estilosDeBotao('primario', 'md'), 'w-full')}
+          >
             <Plus className="size-4" aria-hidden="true" />
             Novo documento
           </Link>
@@ -85,7 +93,9 @@ export function AppShell() {
             className={({ isActive }) =>
               cn(
                 'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
-                isActive ? 'bg-destaque-suave text-destaque-tinta' : 'text-tinta-2 hover:bg-superficie-2 hover:text-tinta',
+                isActive
+                  ? 'bg-destaque-suave text-destaque-tinta'
+                  : 'text-tinta-2 hover:bg-superficie-2 hover:text-tinta',
               )
             }
           >
@@ -101,12 +111,21 @@ export function AppShell() {
 
   return (
     <div className="bg-fundo flex min-h-dvh">
-      <aside className="border-linha bg-superficie sticky top-0 hidden h-dvh w-64 shrink-0 border-r lg:block">{barra}</aside>
+      <aside className="border-linha bg-superficie sticky top-0 hidden h-dvh w-64 shrink-0 border-r lg:block">
+        {barra}
+      </aside>
 
       {menuAberto && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div aria-hidden="true" className="animate-surgir absolute inset-0 bg-noite-950/50 backdrop-blur-sm" onClick={() => definirMenuAberto(false)} />
-          <aside className="bg-superficie animate-surgir absolute inset-y-0 left-0 w-72 shadow-elevada" aria-label="Menu">
+          <div
+            aria-hidden="true"
+            className="animate-surgir absolute inset-0 bg-noite-950/50 backdrop-blur-sm"
+            onClick={() => definirMenuAberto(false)}
+          />
+          <aside
+            className="bg-superficie animate-surgir absolute inset-y-0 left-0 w-72 shadow-elevada"
+            aria-label="Menu"
+          >
             <button
               type="button"
               onClick={() => definirMenuAberto(false)}
@@ -122,7 +141,10 @@ export function AppShell() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <Cabecalho aoAbrirMenu={() => definirMenuAberto(true)} />
-        <main id="conteudo" className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <main
+          id="conteudo"
+          className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8"
+        >
           <Outlet />
         </main>
       </div>
@@ -131,7 +153,11 @@ export function AppShell() {
 }
 
 function CartaoDaCota() {
-  const { data } = useQuery({ queryKey: ['painel'], queryFn: apiDoPainel.resumo, staleTime: 60_000 });
+  const { data } = useQuery({
+    queryKey: ['painel'],
+    queryFn: apiDoPainel.resumo,
+    staleTime: 60_000,
+  });
 
   if (data === undefined) return <div className="h-4" />;
 
@@ -144,13 +170,19 @@ function CartaoDaCota() {
         <ShieldCheck className="text-destaque size-4" aria-hidden="true" />
       </div>
       {data.cota.limite === null ? (
-        <p className="text-tinta-3 mt-1 text-xs">Envios ilimitados · {data.cota.usados} neste mês</p>
+        <p className="text-tinta-3 mt-1 text-xs">
+          Envios ilimitados · {data.cota.usados} neste mês
+        </p>
       ) : (
         <>
           <p className="text-tinta-3 mt-1 text-xs numeros">
             {data.cota.usados} de {data.cota.limite} envios neste mês
           </p>
-          <BarraDeProgresso className="mt-2.5" valor={data.cota.usados / data.cota.limite} rotulo="Uso da cota mensal" />
+          <BarraDeProgresso
+            className="mt-2.5"
+            valor={data.cota.usados / data.cota.limite}
+            rotulo="Uso da cota mensal"
+          />
         </>
       )}
     </div>
@@ -164,17 +196,25 @@ function Cabecalho({ aoAbrirMenu }: { readonly aoAbrirMenu: () => void }) {
 
   const buscar = (evento: FormEvent) => {
     evento.preventDefault();
-    navegar(`/app/documentos${busca.trim() ? `?q=${encodeURIComponent(busca.trim())}` : ''}`);
+    void navegar(`/app/documentos${busca.trim() ? `?q=${encodeURIComponent(busca.trim())}` : ''}`);
   };
 
   return (
     <header className="border-linha bg-superficie/80 sticky top-0 z-30 flex h-16 items-center gap-3 border-b px-4 backdrop-blur-xl sm:px-6 lg:px-8">
-      <button type="button" onClick={aoAbrirMenu} aria-label="Abrir menu" className="text-tinta-2 hover:bg-superficie-2 rounded-lg p-2 lg:hidden">
+      <button
+        type="button"
+        onClick={aoAbrirMenu}
+        aria-label="Abrir menu"
+        className="text-tinta-2 hover:bg-superficie-2 rounded-lg p-2 lg:hidden"
+      >
         <Menu className="size-5" />
       </button>
 
       <form onSubmit={buscar} role="search" className="relative hidden max-w-md flex-1 sm:block">
-        <Search className="text-tinta-3 pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2" aria-hidden="true" />
+        <Search
+          className="text-tinta-3 pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2"
+          aria-hidden="true"
+        />
         <input
           type="search"
           value={busca}
@@ -229,14 +269,20 @@ function useSuspenso() {
 function Sino() {
   const { aberto, definirAberto, raiz } = useSuspenso();
   const clienteDeQuery = useQueryClient();
-  const { data } = useQuery({ queryKey: ['notificacoes'], queryFn: apiDaConta.notificacoes, refetchInterval: 30_000 });
+  const { data } = useQuery({
+    queryKey: ['notificacoes'],
+    queryFn: apiDaConta.notificacoes,
+    refetchInterval: 30_000,
+  });
   const naoLidas = data?.naoLidas ?? 0;
 
   const abrir = () => {
     definirAberto(!aberto);
 
     if (!aberto && naoLidas > 0) {
-      void apiDaConta.marcarLidas().then(() => clienteDeQuery.invalidateQueries({ queryKey: ['notificacoes'] }));
+      void apiDaConta
+        .marcarLidas()
+        .then(() => clienteDeQuery.invalidateQueries({ queryKey: ['notificacoes'] }));
     }
   };
 
@@ -259,9 +305,13 @@ function Sino() {
 
       {aberto && (
         <div className="border-linha bg-superficie shadow-elevada animate-surgir absolute right-0 mt-2 w-[22rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border">
-          <p className="border-linha text-tinta border-b px-4 py-3 text-sm font-semibold">Notificações</p>
+          <p className="border-linha text-tinta border-b px-4 py-3 text-sm font-semibold">
+            Notificações
+          </p>
           <ul className="rolagem-fina max-h-96 overflow-y-auto">
-            {(data?.itens.length ?? 0) === 0 && <li className="text-tinta-3 px-4 py-10 text-center text-sm">Nada novo por aqui.</li>}
+            {(data?.itens.length ?? 0) === 0 && (
+              <li className="text-tinta-3 px-4 py-10 text-center text-sm">Nada novo por aqui.</li>
+            )}
             {data?.itens.map((n) => (
               <li key={n.id} className="border-linha border-b last:border-0">
                 <Link
@@ -269,11 +319,19 @@ function Sino() {
                   onClick={() => definirAberto(false)}
                   className="hover:bg-superficie-2 flex gap-3 px-4 py-3 transition"
                 >
-                  <span className={cn('mt-1.5 size-2 shrink-0 rounded-full', n.lida ? 'bg-transparent' : 'bg-destaque')} aria-hidden="true" />
+                  <span
+                    className={cn(
+                      'mt-1.5 size-2 shrink-0 rounded-full',
+                      n.lida ? 'bg-transparent' : 'bg-destaque',
+                    )}
+                    aria-hidden="true"
+                  />
                   <span className="min-w-0">
                     <span className="text-tinta block text-sm font-medium">{n.titulo}</span>
                     <span className="text-tinta-2 block text-sm">{n.mensagem}</span>
-                    <span className="text-tinta-3 mt-0.5 block text-xs">{formatarRelativo(n.criadaEm)}</span>
+                    <span className="text-tinta-3 mt-0.5 block text-xs">
+                      {formatarRelativo(n.criadaEm)}
+                    </span>
                   </span>
                 </Link>
               </li>
@@ -302,8 +360,12 @@ function MenuDoUsuario() {
       >
         <Avatar nome={perfil.nome} tamanho="sm" />
         <span className="hidden text-left md:block">
-          <span className="text-tinta block max-w-40 truncate text-sm leading-tight font-semibold">{perfil.nome}</span>
-          <span className="text-tinta-3 block max-w-40 truncate text-xs leading-tight">{perfil.organizacao.nome}</span>
+          <span className="text-tinta block max-w-40 truncate text-sm leading-tight font-semibold">
+            {perfil.nome}
+          </span>
+          <span className="text-tinta-3 block max-w-40 truncate text-xs leading-tight">
+            {perfil.organizacao.nome}
+          </span>
         </span>
         <ChevronDown className="text-tinta-3 hidden size-4 md:block" aria-hidden="true" />
       </button>
@@ -313,7 +375,9 @@ function MenuDoUsuario() {
           <div className="px-3 py-2.5">
             <p className="text-tinta truncate text-sm font-semibold">{perfil.nome}</p>
             <p className="text-tinta-3 truncate text-xs">{perfil.email}</p>
-            <p className="text-destaque-tinta mt-1.5 text-xs font-medium">{ROTULO_DO_PAPEL[perfil.papel]}</p>
+            <p className="text-destaque-tinta mt-1.5 text-xs font-medium">
+              {ROTULO_DO_PAPEL[perfil.papel]}
+            </p>
           </div>
           <div className="border-linha my-1 border-t" />
           <Link

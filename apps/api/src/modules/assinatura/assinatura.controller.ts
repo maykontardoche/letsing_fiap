@@ -1,4 +1,14 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+  Res,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { OrigemDaRequisicao, Publico } from '../../common/auth/decorators';
@@ -38,7 +48,10 @@ export class AssinaturaController {
     @Query('baixar') baixar: string | undefined,
     @Res() resposta: Response,
   ): Promise<void> {
-    const { conteudo, nome } = await this.servico.arquivo(token, versao === 'assinado' ? 'assinado' : 'original');
+    const { conteudo, nome } = await this.servico.arquivo(
+      token,
+      versao === 'assinado' ? 'assinado' : 'original',
+    );
 
     enviarPdf(resposta, conteudo, nome, baixar === '1');
   }
@@ -66,37 +79,61 @@ export class AssinaturaController {
 
   @Post('verificacoes/codigo_email/concluir')
   @HttpCode(HttpStatus.OK)
-  concluirCodigo(@Param('token') token: string, @Body() dto: ConcluirCodigoDto, @OrigemDaRequisicao() origem: Origem) {
+  concluirCodigo(
+    @Param('token') token: string,
+    @Body() dto: ConcluirCodigoDto,
+    @OrigemDaRequisicao() origem: Origem,
+  ) {
     return this.servico.concluirCodigo(token, dto, origem);
   }
 
   @Post('verificacoes/facial/concluir')
   @HttpCode(HttpStatus.OK)
-  concluirFacial(@Param('token') token: string, @Body() dto: ConcluirFacialDto, @OrigemDaRequisicao() origem: Origem) {
+  concluirFacial(
+    @Param('token') token: string,
+    @Body() dto: ConcluirFacialDto,
+    @OrigemDaRequisicao() origem: Origem,
+  ) {
     return this.servico.concluirFacial(token, dto, origem);
   }
 
   @Post('verificacoes/voz/concluir')
   @HttpCode(HttpStatus.OK)
-  concluirVoz(@Param('token') token: string, @Body() dto: ConcluirVozDto, @OrigemDaRequisicao() origem: Origem) {
+  concluirVoz(
+    @Param('token') token: string,
+    @Body() dto: ConcluirVozDto,
+    @OrigemDaRequisicao() origem: Origem,
+  ) {
     return this.servico.concluirVoz(token, dto, origem);
   }
 
   @Post('verificacoes/gestos/concluir')
   @HttpCode(HttpStatus.OK)
-  concluirGestos(@Param('token') token: string, @Body() dto: ConcluirGestosDto, @OrigemDaRequisicao() origem: Origem) {
+  concluirGestos(
+    @Param('token') token: string,
+    @Body() dto: ConcluirGestosDto,
+    @OrigemDaRequisicao() origem: Origem,
+  ) {
     return this.servico.concluirGestos(token, dto, origem);
   }
 
   @Post('assinar')
   @HttpCode(HttpStatus.OK)
-  assinar(@Param('token') token: string, @Body() dto: AssinarDto, @OrigemDaRequisicao() origem: Origem) {
+  assinar(
+    @Param('token') token: string,
+    @Body() dto: AssinarDto,
+    @OrigemDaRequisicao() origem: Origem,
+  ) {
     return this.servico.assinar(token, dto, origem);
   }
 
   @Post('recusar')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async recusar(@Param('token') token: string, @Body() dto: RecusarDto, @OrigemDaRequisicao() origem: Origem): Promise<void> {
+  async recusar(
+    @Param('token') token: string,
+    @Body() dto: RecusarDto,
+    @OrigemDaRequisicao() origem: Origem,
+  ): Promise<void> {
     await this.servico.recusar(token, dto.motivo, origem);
   }
 }

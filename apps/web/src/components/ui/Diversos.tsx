@@ -12,9 +12,18 @@ const DEGRADES = [
   'from-sky-500 to-indigo-500',
 ];
 
-export function Avatar({ nome, tamanho = 'md', className }: { readonly nome: string; readonly tamanho?: 'sm' | 'md' | 'lg'; readonly className?: string }) {
+export function Avatar({
+  nome,
+  tamanho = 'md',
+  className,
+}: {
+  readonly nome: string;
+  readonly tamanho?: 'sm' | 'md' | 'lg';
+  readonly className?: string;
+}) {
   const partes = nome.trim().split(/\s+/);
-  const iniciais = `${partes[0]?.[0] ?? ''}${partes.length > 1 ? (partes[partes.length - 1]?.[0] ?? '') : ''}`.toUpperCase();
+  const iniciais =
+    `${partes[0]?.[0] ?? ''}${partes.length > 1 ? (partes[partes.length - 1]?.[0] ?? '') : ''}`.toUpperCase();
   const indice = [...nome].reduce((soma, c) => soma + c.charCodeAt(0), 0) % DEGRADES.length;
 
   return (
@@ -87,9 +96,23 @@ interface Aba<T extends string> {
 }
 
 /** Abas como controle segmentado. Navegáveis por teclado (são botões num tablist). */
-export function Abas<T extends string>({ abas, ativa, aoMudar, rotulo }: { readonly abas: readonly Aba<T>[]; readonly ativa: T; readonly aoMudar: (id: T) => void; readonly rotulo: string }) {
+export function Abas<T extends string>({
+  abas,
+  ativa,
+  aoMudar,
+  rotulo,
+}: {
+  readonly abas: readonly Aba<T>[];
+  readonly ativa: T;
+  readonly aoMudar: (id: T) => void;
+  readonly rotulo: string;
+}) {
   return (
-    <div role="tablist" aria-label={rotulo} className="bg-superficie-2 inline-flex max-w-full gap-1 overflow-x-auto rounded-xl p-1">
+    <div
+      role="tablist"
+      aria-label={rotulo}
+      className="bg-superficie-2 inline-flex max-w-full gap-1 overflow-x-auto rounded-xl p-1"
+    >
       {abas.map((aba) => (
         <button
           key={aba.id}
@@ -99,13 +122,22 @@ export function Abas<T extends string>({ abas, ativa, aoMudar, rotulo }: { reado
           onClick={() => aoMudar(aba.id)}
           className={cn(
             'inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium whitespace-nowrap transition [&_svg]:size-4',
-            aba.id === ativa ? 'bg-superficie text-tinta shadow-cartao' : 'text-tinta-2 hover:text-tinta',
+            aba.id === ativa
+              ? 'bg-superficie text-tinta shadow-cartao'
+              : 'text-tinta-2 hover:text-tinta',
           )}
         >
           {aba.icone}
           {aba.rotulo}
           {aba.contagem !== undefined && (
-            <span className={cn('rounded-full px-1.5 text-xs numeros', aba.id === ativa ? 'bg-destaque-suave text-destaque-tinta' : 'bg-superficie-3 text-tinta-3')}>
+            <span
+              className={cn(
+                'rounded-full px-1.5 text-xs numeros',
+                aba.id === ativa
+                  ? 'bg-destaque-suave text-destaque-tinta'
+                  : 'bg-superficie-3 text-tinta-3',
+              )}
+            >
               {aba.contagem}
             </span>
           )}
@@ -115,7 +147,15 @@ export function Abas<T extends string>({ abas, ativa, aoMudar, rotulo }: { reado
   );
 }
 
-export function BarraDeProgresso({ valor, rotulo, className }: { readonly valor: number; readonly rotulo: string; readonly className?: string }) {
+export function BarraDeProgresso({
+  valor,
+  rotulo,
+  className,
+}: {
+  readonly valor: number;
+  readonly rotulo: string;
+  readonly className?: string;
+}) {
   const porcentagem = Math.round(Math.max(0, Math.min(1, valor)) * 100);
 
   return (
@@ -127,12 +167,25 @@ export function BarraDeProgresso({ valor, rotulo, className }: { readonly valor:
       aria-valuemax={100}
       className={cn('bg-superficie-3 h-1.5 overflow-hidden rounded-full', className)}
     >
-      <div className="bg-gradiente-marca h-full rounded-full transition-all duration-700" style={{ width: `${porcentagem}%` }} />
+      <div
+        className="bg-gradiente-marca h-full rounded-full transition-all duration-700"
+        style={{ width: `${porcentagem}%` }}
+      />
     </div>
   );
 }
 
 /** Texto de hash/código monoespaçado, que quebra em qualquer ponto. */
-export function Hash({ valor, className }: { readonly valor: string; readonly className?: string }) {
-  return <code className={cn('text-destaque-tinta font-mono text-xs break-all', className)}>{valor}</code>;
+export function Hash({
+  valor,
+  className,
+}: {
+  readonly valor: string;
+  readonly className?: string;
+}) {
+  return (
+    <code className={cn('text-destaque-tinta font-mono text-xs break-all', className)}>
+      {valor}
+    </code>
+  );
 }

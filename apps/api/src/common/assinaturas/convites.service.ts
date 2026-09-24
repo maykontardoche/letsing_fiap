@@ -36,7 +36,11 @@ export class ConvitesService {
   ) {}
 
   /** Gera um token novo, grava o hash e devolve o link. Não envia nada. */
-  async emitirLink(signatario: Signatario, documento: Documento, tx?: TransacaoEscopada): Promise<string> {
+  async emitirLink(
+    signatario: Signatario,
+    documento: Documento,
+    tx?: TransacaoEscopada,
+  ): Promise<string> {
     const { token, hash } = gerarToken();
     const cliente = tx ?? this.prisma.db;
 
@@ -81,7 +85,11 @@ export class ConvitesService {
         mensagem: contexto.documento.mensagem,
         url: link,
         prazo: contexto.documento.prazo
-          ? contexto.documento.prazo.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'long', timeStyle: 'short' })
+          ? contexto.documento.prazo.toLocaleString('pt-BR', {
+              timeZone: 'America/Sao_Paulo',
+              dateStyle: 'long',
+              timeStyle: 'short',
+            })
           : null,
       }),
     );
@@ -105,5 +113,7 @@ export function ehAVezDe(
 
   if (!sequencial) return true;
 
-  return todos.filter((outro) => outro.ordem < signatario.ordem).every((outro) => outro.status === 'assinado');
+  return todos
+    .filter((outro) => outro.ordem < signatario.ordem)
+    .every((outro) => outro.status === 'assinado');
 }

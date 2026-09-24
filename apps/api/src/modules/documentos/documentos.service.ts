@@ -19,6 +19,7 @@ import type { Origem, UsuarioAutenticado } from '../../common/auth/requisicao';
 import { chaveDeCifra, cifrar } from '../../common/cripto/cifra';
 import { gerarCodigoDeDocumento, sha256 } from '../../common/cripto/hash';
 import { LIMITES_DO_PLANO, ROTULO_DO_PLANO, inicioDoMes } from '../../common/planos';
+import { comOrganizacaoDoContexto } from '../../common/tenancy/dados-escopados';
 import { apenasDigitos, cpfValido } from '../../common/texto/mascaras';
 import { detalheDoDocumento, resumoDoDocumento } from './apresentacao';
 import type { AtualizarDocumentoDto, ListarDocumentosDto, SignatarioDto } from './documentos.dto';
@@ -49,7 +50,6 @@ export interface ArquivoEnviado {
  */
 @Injectable()
 export class DocumentosService {
-  // eslint-disable-next-line max-params -- colaboradores injetados pelo Nest
   constructor(
     private readonly prisma: PrismaService,
     private readonly armazenamento: ArmazenamentoService,
@@ -67,11 +67,22 @@ export class DocumentosService {
           OR: [
             { titulo: { contains: filtro.q, mode: 'insensitive' } },
             { codigo: { contains: filtro.q.toUpperCase() } },
-            { signatarios: { some: { OR: [{ nome: { contains: filtro.q, mode: 'insensitive' } }, { email: { contains: filtro.q.toLowerCase() } }] } } },
+            {
+              signatarios: {
+                some: {
+                  OR: [
+                    { nome: { contains: filtro.q, mode: 'insensitive' } },
+                    { email: { contains: filtro.q.toLowerCase() } },
+                  ],
+                },
+              },
+            },
           ],
         }
       : {};
-    const onde: Prisma.DocumentoWhereInput = { AND: [visiveis, busca, filtro.status ? { status: filtro.status } : {}] };
+    const onde: Prisma.DocumentoWhereInput = {
+      AND: [visiveis, busca, filtro.status ? { status: filtro.status } : {}],
+    };
 
     const [itens, total, porStatus] = await Promise.all([
       this.prisma.db.documento.findMany({
@@ -82,7 +93,11 @@ export class DocumentosService {
         take: porPagina,
       }),
       this.prisma.db.documento.count({ where: onde }),
-      this.prisma.db.documento.groupBy({ by: ['status'], where: { AND: [visiveis, busca] }, _count: true }),
+      this.prisma.db.documento.groupBy({
+        by: ['status'],
+        where: { AND: [visiveis, busca] },
+        _count: true,
+      }),
     ]);
 
     return {
@@ -90,17 +105,24 @@ export class DocumentosService {
       total,
       pagina,
       porPagina,
-      contagens: Object.fromEntries(porStatus.map((grupo) => [grupo.status, grupo._count])) as Partial<Record<StatusDoDocumento, number>>,
+      contagens: Object.fromEntries(
+        porStatus.map((grupo) => [grupo.status, grupo._count]),
+      ) as Partial<Record<StatusDoDocumento, number>>,
     };
   }
 
-  async criar(usuario: UsuarioAutenticado, dados: { titulo: string; mensagem?: string }, arquivo: ArquivoEnviado | undefined, origem: Origem) {
+  async criar(
+    usuario: UsuarioAutenticado,
+    dados: { titulo: string; mensagem?: string },
+    arquivo: ArquivoEnviado | undefined,
+    origem: Origem,
+  ) {
     if (arquivo === undefined) throw new BadRequestException('Envie o arquivo PDF do documento.');
 
     const paginas = await this.validarPdf(arquivo);
     const documento = await this.prisma.db.$transaction(async (tx) => {
       const criado = await tx.documento.create({
-        data: {
+        data: comOrganizacaoDoContexto<Prisma.DocumentoUncheckedCreateInput>({
           criadoPorId: usuario.id,
           titulo: dados.titulo,
           mensagem: dados.mensagem || null,
@@ -111,9 +133,13 @@ export class DocumentosService {
           hashOriginal: sha256(arquivo.buffer),
           // Provisório: a chave depende do uuid, que só existe depois do insert.
           arquivoOriginal: '',
-        } as Prisma.DocumentoUncheckedCreateInput,
+        }),
       });
-      const chave = ArmazenamentoService.chaveDoDocumento(usuario.organizacaoId, criado.uuid, 'original');
+      const chave = ArmazenamentoService.chaveDoDocumento(
+        usuario.organizacaoId,
+        criado.uuid,
+        'original',
+      );
 
       await this.armazenamento.gravar(chave, arquivo.buffer);
 
@@ -154,13 +180,20 @@ export class DocumentosService {
       podeGerenciar: this.podeGerenciar(usuario, documento),
       urlDeValidacao: `${this.env.urlDoApp}/validar/${documento.codigo}`,
       meuSignatario:
-        meu !== undefined && documento.status === 'em_andamento' && ehAVezDe(meu, documento.signatarios, documento.ordemSequencial)
+        meu !== undefined &&
+        documento.status === 'em_andamento' &&
+        ehAVezDe(meu, documento.signatarios, documento.ordemSequencial)
           ? meu.uuid
           : null,
     });
   }
 
-  async atualizar(usuario: UsuarioAutenticado, uuid: string, dto: AtualizarDocumentoDto, origem: Origem) {
+  async atualizar(
+    usuario: UsuarioAutenticado,
+    uuid: string,
+    dto: AtualizarDocumentoDto,
+    origem: Origem,
+  ) {
     const documento = await this.rascunhoGerenciavel(usuario, uuid);
 
     if (dto.prazo && new Date(dto.prazo) <= new Date()) {
@@ -174,7 +207,8 @@ export class DocumentosService {
         mensagem: dto.mensagem === undefined ? undefined : dto.mensagem || null,
         nivelVerificacao: dto.nivelVerificacao,
         ordemSequencial: dto.ordemSequencial,
-        prazo: dto.prazo === undefined ? undefined : dto.prazo === null ? null : new Date(dto.prazo),
+        prazo:
+          dto.prazo === undefined ? undefined : dto.prazo === null ? null : new Date(dto.prazo),
       },
     });
 
@@ -193,11 +227,17 @@ export class DocumentosService {
   }
 
   /** Substitui a lista inteira de signatários. A ordem do array é a ordem de assinatura. */
-  async definirSignatarios(usuario: UsuarioAutenticado, uuid: string, lista: SignatarioDto[], origem: Origem) {
+  async definirSignatarios(
+    usuario: UsuarioAutenticado,
+    uuid: string,
+    lista: SignatarioDto[],
+    origem: Origem,
+  ) {
     const documento = await this.rascunhoGerenciavel(usuario, uuid);
     const emails = new Set(lista.map((s) => s.email));
 
-    if (emails.size !== lista.length) throw new BadRequestException('Há e-mails repetidos entre os signatários.');
+    if (emails.size !== lista.length)
+      throw new BadRequestException('Há e-mails repetidos entre os signatários.');
 
     const chave = chaveDeCifra(this.env.chaveDeCifra);
     const linhas = lista.map((s, indice) => {
@@ -241,16 +281,22 @@ export class DocumentosService {
   /** Rascunho → em andamento: confere a cota do plano, emite os links e envia os convites. */
   async enviar(usuario: UsuarioAutenticado, uuid: string, origem: Origem) {
     const documento = await this.rascunhoGerenciavel(usuario, uuid);
-    const signatarios = await this.prisma.db.signatario.findMany({ where: { documentoId: documento.id }, orderBy: { ordem: 'asc' } });
+    const signatarios = await this.prisma.db.signatario.findMany({
+      where: { documentoId: documento.id },
+      orderBy: { ordem: 'asc' },
+    });
 
-    if (signatarios.length === 0) throw new UnprocessableEntityException('Adicione pelo menos um signatário antes de enviar.');
+    if (signatarios.length === 0)
+      throw new UnprocessableEntityException('Adicione pelo menos um signatário antes de enviar.');
     if (documento.prazo !== null && documento.prazo <= new Date()) {
       throw new UnprocessableEntityException('O prazo já passou. Ajuste a data antes de enviar.');
     }
 
     await this.exigirCotaDoPlano(usuario.organizacaoId);
 
-    const organizacao = await this.prisma.db.organizacao.findUniqueOrThrow({ where: { id: usuario.organizacaoId } });
+    const organizacao = await this.prisma.db.organizacao.findUniqueOrThrow({
+      where: { id: usuario.organizacaoId },
+    });
     const primeiros = documento.ordemSequencial ? signatarios.slice(0, 1) : signatarios;
 
     await this.prisma.db.$transaction(async (tx) => {
@@ -269,7 +315,10 @@ export class DocumentosService {
           atorId: usuario.id,
           atorNome: usuario.nome,
           documento: { id: documento.id, uuid: documento.uuid },
-          dados: { nivelVerificacao: documento.nivelVerificacao, ordemSequencial: documento.ordemSequencial },
+          dados: {
+            nivelVerificacao: documento.nivelVerificacao,
+            ordemSequencial: documento.ordemSequencial,
+          },
           origem,
         },
         tx,
@@ -279,7 +328,11 @@ export class DocumentosService {
     // ⚠️ Depois do commit: e-mail enfileirado dentro da transação sairia mesmo
     // se ela fosse desfeita, com um link que não existe.
     for (const signatario of primeiros) {
-      await this.convites.convidar(signatario, { documento, organizacao: organizacao.nome, remetente: usuario.nome });
+      await this.convites.convidar(signatario, {
+        documento,
+        organizacao: organizacao.nome,
+        remetente: usuario.nome,
+      });
     }
 
     return this.detalhe(usuario, uuid);
@@ -298,7 +351,10 @@ export class DocumentosService {
         data: { status: 'cancelado', canceladoEm: new Date(), motivoCancelamento: motivo },
       });
       // Os links deixam de valer na hora.
-      await tx.signatario.updateMany({ where: { documentoId: documento.id }, data: { tokenHash: null } });
+      await tx.signatario.updateMany({
+        where: { documentoId: documento.id },
+        data: { tokenHash: null },
+      });
       await this.auditoria.registrar(
         {
           acao: 'documento_cancelado',
@@ -341,16 +397,31 @@ export class DocumentosService {
 
   /** Reenvia o convite (rotacionando o link) a um signatário que ainda não assinou. */
   async reenviarConvite(usuario: UsuarioAutenticado, uuid: string, signatarioUuid: string) {
-    const { documento, signatario, todos } = await this.signatarioEmAndamento(usuario, uuid, signatarioUuid);
+    const { documento, signatario, todos } = await this.signatarioEmAndamento(
+      usuario,
+      uuid,
+      signatarioUuid,
+    );
 
     if (!ehAVezDe(signatario, todos, documento.ordemSequencial)) {
-      throw new UnprocessableEntityException('Ainda não é a vez deste signatário — ele receberá o convite quando os anteriores assinarem.');
+      throw new UnprocessableEntityException(
+        'Ainda não é a vez deste signatário — ele receberá o convite quando os anteriores assinarem.',
+      );
     }
 
-    const organizacao = await this.prisma.db.organizacao.findUniqueOrThrow({ where: { id: usuario.organizacaoId } });
-    const link = await this.convites.convidar(signatario, { documento, organizacao: organizacao.nome, remetente: usuario.nome }, { reenvio: true });
+    const organizacao = await this.prisma.db.organizacao.findUniqueOrThrow({
+      where: { id: usuario.organizacaoId },
+    });
+    const link = await this.convites.convidar(
+      signatario,
+      { documento, organizacao: organizacao.nome, remetente: usuario.nome },
+      { reenvio: true },
+    );
 
-    await this.prisma.db.signatario.update({ where: { id: signatario.id }, data: { lembreteEm: new Date() } });
+    await this.prisma.db.signatario.update({
+      where: { id: signatario.id },
+      data: { lembreteEm: new Date() },
+    });
 
     return { link };
   }
@@ -372,8 +443,14 @@ export class DocumentosService {
 
     const meu = documento.signatarios.find((s) => s.email === usuario.email);
 
-    if (meu === undefined || documento.status !== 'em_andamento' || !ehAVezDe(meu, documento.signatarios, documento.ordemSequencial)) {
-      throw new UnprocessableEntityException('Não há assinatura sua pendente neste documento agora.');
+    if (
+      meu === undefined ||
+      documento.status !== 'em_andamento' ||
+      !ehAVezDe(meu, documento.signatarios, documento.ordemSequencial)
+    ) {
+      throw new UnprocessableEntityException(
+        'Não há assinatura sua pendente neste documento agora.',
+      );
     }
 
     const link = await this.convites.emitirLink(meu, documento);
@@ -382,16 +459,20 @@ export class DocumentosService {
   }
 
   async arquivo(usuario: UsuarioAutenticado, uuid: string, versao: 'original' | 'assinado') {
-    const documento = await this.prisma.db.documento.findFirst({ where: { AND: [{ uuid }, this.visibilidade(usuario)] } });
+    const documento = await this.prisma.db.documento.findFirst({
+      where: { AND: [{ uuid }, this.visibilidade(usuario)] },
+    });
 
     if (documento === null) throw new NotFoundException('Documento não encontrado.');
 
     const chave = versao === 'assinado' ? documento.arquivoAssinado : documento.arquivoOriginal;
 
-    if (chave === null) throw new NotFoundException('O PDF assinado só existe depois que todos assinam.');
+    if (chave === null)
+      throw new NotFoundException('O PDF assinado só existe depois que todos assinam.');
 
     // ⚠️ Segunda camada contra IDOR: a chave precisa estar na pasta da organização.
-    if (!this.armazenamento.pertence(chave, usuario.organizacaoId)) throw new NotFoundException('Documento não encontrado.');
+    if (!this.armazenamento.pertence(chave, usuario.organizacaoId))
+      throw new NotFoundException('Documento não encontrado.');
 
     return {
       conteudo: await this.armazenamento.ler(chave),
@@ -432,18 +513,28 @@ export class DocumentosService {
   private visibilidade(usuario: UsuarioAutenticado): Prisma.DocumentoWhereInput {
     if (pode(usuario.papel, 'documentos.ver_todos')) return {};
 
-    return { OR: [{ criadoPorId: usuario.id }, { signatarios: { some: { email: usuario.email } } }] };
+    return {
+      OR: [{ criadoPorId: usuario.id }, { signatarios: { some: { email: usuario.email } } }],
+    };
   }
 
-  private podeGerenciar(usuario: UsuarioAutenticado, documento: Pick<Documento, 'criadoPorId'>): boolean {
-    return documento.criadoPorId === usuario.id || pode(usuario.papel, 'documentos.gerenciar_todos');
+  private podeGerenciar(
+    usuario: UsuarioAutenticado,
+    documento: Pick<Documento, 'criadoPorId'>,
+  ): boolean {
+    return (
+      documento.criadoPorId === usuario.id || pode(usuario.papel, 'documentos.gerenciar_todos')
+    );
   }
 
   private async gerenciavel(usuario: UsuarioAutenticado, uuid: string): Promise<Documento> {
-    const documento = await this.prisma.db.documento.findFirst({ where: { AND: [{ uuid }, this.visibilidade(usuario)] } });
+    const documento = await this.prisma.db.documento.findFirst({
+      where: { AND: [{ uuid }, this.visibilidade(usuario)] },
+    });
 
     if (documento === null) throw new NotFoundException('Documento não encontrado.');
-    if (!this.podeGerenciar(usuario, documento)) throw new ForbiddenException('Só quem criou o documento pode alterá-lo.');
+    if (!this.podeGerenciar(usuario, documento))
+      throw new ForbiddenException('Só quem criou o documento pode alterá-lo.');
 
     return documento;
   }
@@ -452,18 +543,27 @@ export class DocumentosService {
     const documento = await this.gerenciavel(usuario, uuid);
 
     if (documento.status !== 'rascunho') {
-      throw new UnprocessableEntityException('Depois de enviado, o documento não pode mais ser alterado.');
+      throw new UnprocessableEntityException(
+        'Depois de enviado, o documento não pode mais ser alterado.',
+      );
     }
 
     return documento;
   }
 
-  private async signatarioEmAndamento(usuario: UsuarioAutenticado, uuid: string, signatarioUuid: string) {
+  private async signatarioEmAndamento(
+    usuario: UsuarioAutenticado,
+    uuid: string,
+    signatarioUuid: string,
+  ) {
     const documento = await this.gerenciavel(usuario, uuid);
 
-    if (documento.status !== 'em_andamento') throw new UnprocessableEntityException('O documento não está em andamento.');
+    if (documento.status !== 'em_andamento')
+      throw new UnprocessableEntityException('O documento não está em andamento.');
 
-    const todos = await this.prisma.db.signatario.findMany({ where: { documentoId: documento.id } });
+    const todos = await this.prisma.db.signatario.findMany({
+      where: { documentoId: documento.id },
+    });
     const signatario = todos.find((s) => s.uuid === signatarioUuid);
 
     if (signatario === undefined) throw new NotFoundException('Signatário não encontrado.');
@@ -472,12 +572,16 @@ export class DocumentosService {
   }
 
   private async exigirCotaDoPlano(organizacaoId: number): Promise<void> {
-    const organizacao = await this.prisma.db.organizacao.findUniqueOrThrow({ where: { id: organizacaoId } });
+    const organizacao = await this.prisma.db.organizacao.findUniqueOrThrow({
+      where: { id: organizacaoId },
+    });
     const limite = LIMITES_DO_PLANO[organizacao.plano].enviosPorMes;
 
     if (limite === null) return;
 
-    const enviados = await this.prisma.db.documento.count({ where: { enviadoEm: { gte: inicioDoMes() } } });
+    const enviados = await this.prisma.db.documento.count({
+      where: { enviadoEm: { gte: inicioDoMes() } },
+    });
 
     if (enviados >= limite) {
       throw new UnprocessableEntityException(
@@ -495,7 +599,9 @@ export class DocumentosService {
    */
   private async validarPdf(arquivo: ArquivoEnviado): Promise<number> {
     if (arquivo.size > this.env.tamanhoMaximoPdfBytes) {
-      throw new BadRequestException(`O PDF pode ter até ${Math.round(this.env.tamanhoMaximoPdfBytes / 1048576)} MB.`);
+      throw new BadRequestException(
+        `O PDF pode ter até ${Math.round(this.env.tamanhoMaximoPdfBytes / 1048576)} MB.`,
+      );
     }
 
     if (arquivo.buffer.subarray(0, 5).toString('latin1') !== '%PDF-') {
@@ -510,7 +616,9 @@ export class DocumentosService {
       const protegido = erro instanceof Error && /encrypt/i.test(erro.message);
 
       throw new BadRequestException(
-        protegido ? 'Este PDF está protegido por senha. Remova a proteção e envie de novo.' : 'Não foi possível ler este PDF. Ele pode estar corrompido.',
+        protegido
+          ? 'Este PDF está protegido por senha. Remova a proteção e envie de novo.'
+          : 'Não foi possível ler este PDF. Ele pode estar corrompido.',
       );
     }
 

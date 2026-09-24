@@ -40,16 +40,24 @@ export function Campo({ rotulo, erro, dica, opcional = false, className, childre
   const id = useId();
   const idDaDica = `${id}-dica`;
   const idDoErro = `${id}-erro`;
-  const descritores = [dica ? idDaDica : null, erro ? idDoErro : null].filter(Boolean).join(' ') || undefined;
+  const descritores =
+    [dica ? idDaDica : null, erro ? idDoErro : null].filter(Boolean).join(' ') || undefined;
 
   return (
     <div className={cn('space-y-1.5', className)}>
-      <label htmlFor={id} className="text-tinta flex items-center justify-between text-sm font-medium">
+      <label
+        htmlFor={id}
+        className="text-tinta flex items-center justify-between text-sm font-medium"
+      >
         {rotulo}
         {opcional && <span className="text-tinta-3 text-xs font-normal">opcional</span>}
       </label>
       {isValidElement(children)
-        ? cloneElement(children, { id, 'aria-invalid': erro ? true : undefined, 'aria-describedby': descritores })
+        ? cloneElement(children, {
+            id,
+            'aria-invalid': erro ? true : undefined,
+            'aria-describedby': descritores,
+          })
         : children}
       {dica && !erro && (
         <p id={idDaDica} className="text-tinta-3 text-xs">
@@ -57,7 +65,11 @@ export function Campo({ rotulo, erro, dica, opcional = false, className, childre
         </p>
       )}
       {erro && (
-        <p id={idDoErro} role="alert" className="text-perigo-tinta flex items-center gap-1.5 text-xs font-medium">
+        <p
+          id={idDoErro}
+          role="alert"
+          className="text-perigo-tinta flex items-center gap-1.5 text-xs font-medium"
+        >
           <AlertCircle className="size-3.5 shrink-0" aria-hidden="true" />
           {erro}
         </p>
@@ -82,42 +94,60 @@ export const Entrada = forwardRef<HTMLInputElement, PropsDaEntrada>(function Ent
   return (
     <div className="relative">
       {icone && (
-        <span className="text-tinta-3 pointer-events-none absolute inset-y-0 left-3.5 flex items-center [&_svg]:size-4" aria-hidden="true">
+        <span
+          className="text-tinta-3 pointer-events-none absolute inset-y-0 left-3.5 flex items-center [&_svg]:size-4"
+          aria-hidden="true"
+        >
           {icone}
         </span>
       )}
       <input
         ref={ref}
-        className={cn(ESTILO_DO_CONTROLE, 'h-11', icone && 'pl-10', acessorio && 'pr-11', className)}
+        className={cn(
+          ESTILO_DO_CONTROLE,
+          'h-11',
+          icone && 'pl-10',
+          acessorio && 'pr-11',
+          className,
+        )}
         {...resto}
       />
-      {acessorio && <span className="absolute inset-y-0 right-1.5 flex items-center">{acessorio}</span>}
+      {acessorio && (
+        <span className="absolute inset-y-0 right-1.5 flex items-center">{acessorio}</span>
+      )}
     </div>
   );
 });
 
-export const AreaDeTexto = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(
-  function AreaDeTexto({ className, rows = 4, ...resto }, ref) {
-    return <textarea ref={ref} rows={rows} className={cn(ESTILO_DO_CONTROLE, 'resize-y py-2.5 leading-relaxed', className)} {...resto} />;
-  },
-);
-
-export const Seletor = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(function Seletor(
-  { className, children, ...resto },
-  ref,
-) {
+export const AreaDeTexto = forwardRef<
+  HTMLTextAreaElement,
+  TextareaHTMLAttributes<HTMLTextAreaElement>
+>(function AreaDeTexto({ className, rows = 4, ...resto }, ref) {
   return (
-    <select
+    <textarea
       ref={ref}
-      className={cn(
-        ESTILO_DO_CONTROLE,
-        'h-11 cursor-pointer appearance-none bg-[length:16px] bg-[right_0.85rem_center] bg-no-repeat pr-10',
-        "bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7390' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")]",
-        className,
-      )}
+      rows={rows}
+      className={cn(ESTILO_DO_CONTROLE, 'resize-y py-2.5 leading-relaxed', className)}
       {...resto}
-    >
-      {children}
-    </select>
+    />
   );
 });
+
+export const Seletor = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(
+  function Seletor({ className, children, ...resto }, ref) {
+    return (
+      <select
+        ref={ref}
+        className={cn(
+          ESTILO_DO_CONTROLE,
+          'h-11 cursor-pointer appearance-none bg-[length:16px] bg-[right_0.85rem_center] bg-no-repeat pr-10',
+          "bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7390' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")]",
+          className,
+        )}
+        {...resto}
+      >
+        {children}
+      </select>
+    );
+  },
+);

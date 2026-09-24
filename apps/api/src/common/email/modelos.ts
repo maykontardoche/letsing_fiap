@@ -102,7 +102,12 @@ export const modelos = {
     };
   },
 
-  codigoDeVerificacao(dados: { para: string; nome: string; codigo: string; titulo: string }): MensagemDeEmail {
+  codigoDeVerificacao(dados: {
+    para: string;
+    nome: string;
+    codigo: string;
+    titulo: string;
+  }): MensagemDeEmail {
     return {
       para: dados.para,
       assunto: `${dados.codigo} é o seu código de verificação LetsSign`,
@@ -113,13 +118,20 @@ export const modelos = {
           `Olá, ${escapar(dados.nome)}. Use o código abaixo para confirmar sua identidade e assinar <strong>“${escapar(dados.titulo)}”</strong>.`,
         ],
         destaque: dados.codigo,
-        rodape: 'O código vale por 10 minutos. Ninguém do LetsSign vai pedir este código por telefone ou mensagem.',
+        rodape:
+          'O código vale por 10 minutos. Ninguém do LetsSign vai pedir este código por telefone ou mensagem.',
       }),
       texto: `Seu código de verificação LetsSign: ${dados.codigo} (vale por 10 minutos).`,
     };
   },
 
-  documentoConcluido(dados: { para: string; nome: string; titulo: string; url: string; codigo: string }): MensagemDeEmail {
+  documentoConcluido(dados: {
+    para: string;
+    nome: string;
+    titulo: string;
+    url: string;
+    codigo: string;
+  }): MensagemDeEmail {
     return {
       para: dados.para,
       assunto: `Concluído: ${dados.titulo}`,
@@ -136,7 +148,14 @@ export const modelos = {
     };
   },
 
-  documentoRecusado(dados: { para: string; nome: string; titulo: string; quem: string; motivo: string; url: string }): MensagemDeEmail {
+  documentoRecusado(dados: {
+    para: string;
+    nome: string;
+    titulo: string;
+    quem: string;
+    motivo: string;
+    url: string;
+  }): MensagemDeEmail {
     return {
       para: dados.para,
       assunto: `Recusado: ${dados.titulo}`,
@@ -153,7 +172,13 @@ export const modelos = {
     };
   },
 
-  conviteParaEquipe(dados: { para: string; nome: string; quem: string; organizacao: string; url: string }): MensagemDeEmail {
+  conviteParaEquipe(dados: {
+    para: string;
+    nome: string;
+    quem: string;
+    organizacao: string;
+    url: string;
+  }): MensagemDeEmail {
     return {
       para: dados.para,
       assunto: `${dados.quem} convidou você para o LetsSign`,

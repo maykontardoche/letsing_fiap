@@ -4,9 +4,22 @@
  */
 const FUSO = 'America/Sao_Paulo';
 
-const dataCurta = new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, day: '2-digit', month: 'short', year: 'numeric' });
-const dataHora = new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, dateStyle: 'short', timeStyle: 'short' });
-const dataHoraLonga = new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, dateStyle: 'long', timeStyle: 'medium' });
+const dataCurta = new Intl.DateTimeFormat('pt-BR', {
+  timeZone: FUSO,
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+});
+const dataHora = new Intl.DateTimeFormat('pt-BR', {
+  timeZone: FUSO,
+  dateStyle: 'short',
+  timeStyle: 'short',
+});
+const dataHoraLonga = new Intl.DateTimeFormat('pt-BR', {
+  timeZone: FUSO,
+  dateStyle: 'long',
+  timeStyle: 'medium',
+});
 const relativo = new Intl.RelativeTimeFormat('pt-BR', { numeric: 'auto' });
 const mesCurto = new Intl.DateTimeFormat('pt-BR', { month: 'short' });
 
@@ -95,7 +108,11 @@ export function mascararCpf(valor: string): string {
 
 /** Saudação pelo horário de Brasília. */
 export function saudacao(agora = new Date()): string {
-  const hora = Number(new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, hour: 'numeric', hour12: false }).format(agora));
+  const hora = Number(
+    new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, hour: 'numeric', hour12: false }).format(
+      agora,
+    ),
+  );
 
   if (hora < 12) return 'Bom dia';
   if (hora < 18) return 'Boa tarde';

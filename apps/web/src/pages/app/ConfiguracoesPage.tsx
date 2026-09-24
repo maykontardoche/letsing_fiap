@@ -1,7 +1,18 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Building2, Check, Copy, KeyRound, Laptop, Monitor, ShieldCheck, ShieldOff, Smartphone, User } from 'lucide-react';
+import {
+  Building2,
+  Check,
+  Copy,
+  KeyRound,
+  Laptop,
+  Monitor,
+  ShieldCheck,
+  ShieldOff,
+  Smartphone,
+  User,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useConfirmacao } from '@/app/providers/ConfirmacaoProvider';
 import { usePerfil, usePode, useSessao } from '@/app/providers/sessao-contexto';
@@ -31,7 +42,10 @@ export function ConfiguracoesPage() {
 
   return (
     <>
-      <CabecalhoDaPagina titulo="Configurações" descricao="Sua conta, sua segurança e a sua organização." />
+      <CabecalhoDaPagina
+        titulo="Configurações"
+        descricao="Sua conta, sua segurança e a sua organização."
+      />
       <div className="mb-6">
         <Abas
           rotulo="Seções das configurações"
@@ -72,7 +86,9 @@ function Perfil() {
         <Avatar nome={perfil.nome} tamanho="lg" />
         <div>
           <p className="text-tinta text-lg font-bold">{perfil.nome}</p>
-          <p className="text-tinta-3 text-sm">{perfil.email} · {ROTULO_DO_PAPEL[perfil.papel]}</p>
+          <p className="text-tinta-3 text-sm">
+            {perfil.email} · {ROTULO_DO_PAPEL[perfil.papel]}
+          </p>
         </div>
       </div>
       <div className="space-y-4">
@@ -84,7 +100,11 @@ function Perfil() {
         </Campo>
       </div>
       <div className="mt-6 flex justify-end">
-        <Botao disabled={nome.trim().length < 2 || nome.trim() === perfil.nome} carregando={salvar.isPending} onClick={() => salvar.mutate()}>
+        <Botao
+          disabled={nome.trim().length < 2 || nome.trim() === perfil.nome}
+          carregando={salvar.isPending}
+          onClick={() => salvar.mutate()}
+        >
           Salvar
         </Botao>
       </div>
@@ -116,18 +136,35 @@ function TrocaDeSenha() {
 
   return (
     <Cartao>
-      <CabecalhoDoCartao titulo="Senha" descricao="Trocar a senha encerra todas as outras sessões abertas." />
+      <CabecalhoDoCartao
+        titulo="Senha"
+        descricao="Trocar a senha encerra todas as outras sessões abertas."
+      />
       <div className="space-y-4">
         <Campo rotulo="Senha atual">
-          <Entrada type="password" autoComplete="current-password" value={atual} onChange={(e) => definirAtual(e.target.value)} />
+          <Entrada
+            type="password"
+            autoComplete="current-password"
+            value={atual}
+            onChange={(e) => definirAtual(e.target.value)}
+          />
         </Campo>
         <Campo rotulo="Nova senha">
-          <Entrada type="password" autoComplete="new-password" value={nova} onChange={(e) => definirNova(e.target.value)} />
+          <Entrada
+            type="password"
+            autoComplete="new-password"
+            value={nova}
+            onChange={(e) => definirNova(e.target.value)}
+          />
         </Campo>
         <ForcaDaSenha senha={nova} />
       </div>
       <div className="mt-6 flex justify-end">
-        <Botao disabled={!atual || !senhaAtendeRequisitos(nova)} carregando={trocar.isPending} onClick={() => trocar.mutate()}>
+        <Botao
+          disabled={!atual || !senhaAtendeRequisitos(nova)}
+          carregando={trocar.isPending}
+          onClick={() => trocar.mutate()}
+        >
           Alterar senha
         </Botao>
       </div>
@@ -138,13 +175,19 @@ function TrocaDeSenha() {
 function Mfa() {
   const perfil = usePerfil();
   const { recarregar } = useSessao();
-  const [configuracao, definirConfiguracao] = useState<{ qrCode: string; segredo: string } | null>(null);
+  const [configuracao, definirConfiguracao] = useState<{ qrCode: string; segredo: string } | null>(
+    null,
+  );
   const [codigo, definirCodigo] = useState('');
   const [codigosDeRecuperacao, definirCodigosDeRecuperacao] = useState<string[] | null>(null);
   const [desativando, definirDesativando] = useState(false);
   const [senha, definirSenha] = useState('');
 
-  const iniciar = useMutation({ mutationFn: apiDaConta.iniciarMfa, onSuccess: definirConfiguracao, onError: (e) => toast.error(mensagemDoErro(e)) });
+  const iniciar = useMutation({
+    mutationFn: apiDaConta.iniciarMfa,
+    onSuccess: definirConfiguracao,
+    onError: (e) => toast.error(mensagemDoErro(e)),
+  });
   const confirmar = useMutation({
     mutationFn: () => apiDaConta.confirmarMfa(codigo.replace(/\D/g, '')),
     onSuccess: async (resposta) => {
@@ -171,7 +214,17 @@ function Mfa() {
       <CabecalhoDoCartao
         titulo="Verificação em duas etapas"
         descricao="Além da senha, um código do app autenticador (Google Authenticator, Microsoft Authenticator, 1Password…)."
-        acoes={perfil.mfaAtivo ? <Etiqueta tom="sucesso" icone={<ShieldCheck />}>Ativa</Etiqueta> : <Etiqueta tom="alerta" icone={<ShieldOff />}>Inativa</Etiqueta>}
+        acoes={
+          perfil.mfaAtivo ? (
+            <Etiqueta tom="sucesso" icone={<ShieldCheck />}>
+              Ativa
+            </Etiqueta>
+          ) : (
+            <Etiqueta tom="alerta" icone={<ShieldOff />}>
+              Inativa
+            </Etiqueta>
+          )
+        }
       />
 
       {codigosDeRecuperacao ? (
@@ -180,39 +233,94 @@ function Mfa() {
             Eles só aparecem uma vez. Cada um permite entrar uma única vez se você perder o celular.
           </Alerta>
           <ul className="bg-superficie-2 grid grid-cols-2 gap-2 rounded-2xl p-4 font-mono text-sm">
-            {codigosDeRecuperacao.map((c) => <li key={c} className="text-tinta text-center">{c}</li>)}
+            {codigosDeRecuperacao.map((c) => (
+              <li key={c} className="text-tinta text-center">
+                {c}
+              </li>
+            ))}
           </ul>
           <div className="flex gap-2">
-            <Botao variante="secundario" icone={<Copy className="size-4" />} onClick={() => void navigator.clipboard.writeText(codigosDeRecuperacao.join('\n')).then(() => toast.success('Códigos copiados.'))}>
+            <Botao
+              variante="secundario"
+              icone={<Copy className="size-4" />}
+              onClick={() =>
+                void navigator.clipboard
+                  .writeText(codigosDeRecuperacao.join('\n'))
+                  .then(() => toast.success('Códigos copiados.'))
+              }
+            >
               Copiar
             </Botao>
-            <Botao icone={<Check className="size-4" />} onClick={() => definirCodigosDeRecuperacao(null)}>Já guardei</Botao>
+            <Botao
+              icone={<Check className="size-4" />}
+              onClick={() => definirCodigosDeRecuperacao(null)}
+            >
+              Já guardei
+            </Botao>
           </div>
         </div>
       ) : configuracao ? (
         <div className="space-y-4">
           <p className="text-tinta-2 text-sm">1. Escaneie o QR Code no app autenticador.</p>
-          <img src={configuracao.qrCode} alt="QR Code para configurar o app autenticador" className="border-linha mx-auto size-48 rounded-2xl border bg-white p-2" />
+          <img
+            src={configuracao.qrCode}
+            alt="QR Code para configurar o app autenticador"
+            className="border-linha mx-auto size-48 rounded-2xl border bg-white p-2"
+          />
           <p className="text-tinta-3 text-center text-xs">
-            Sem câmera? Digite a chave: <code className="text-tinta font-mono break-all">{configuracao.segredo}</code>
+            Sem câmera? Digite a chave:{' '}
+            <code className="text-tinta font-mono break-all">{configuracao.segredo}</code>
           </p>
           <Campo rotulo="2. Digite o código de 6 dígitos que o app mostra">
-            <Entrada inputMode="numeric" maxLength={7} value={codigo} onChange={(e) => definirCodigo(e.target.value)} className="font-mono text-lg tracking-[0.4em]" placeholder="000000" />
+            <Entrada
+              inputMode="numeric"
+              maxLength={7}
+              value={codigo}
+              onChange={(e) => definirCodigo(e.target.value)}
+              className="font-mono text-lg tracking-[0.4em]"
+              placeholder="000000"
+            />
           </Campo>
           <div className="flex justify-end gap-2">
-            <Botao variante="fantasma" onClick={() => definirConfiguracao(null)}>Cancelar</Botao>
-            <Botao disabled={codigo.replace(/\D/g, '').length !== 6} carregando={confirmar.isPending} onClick={() => confirmar.mutate()}>Ativar</Botao>
+            <Botao variante="fantasma" onClick={() => definirConfiguracao(null)}>
+              Cancelar
+            </Botao>
+            <Botao
+              disabled={codigo.replace(/\D/g, '').length !== 6}
+              carregando={confirmar.isPending}
+              onClick={() => confirmar.mutate()}
+            >
+              Ativar
+            </Botao>
           </div>
         </div>
       ) : perfil.mfaAtivo ? (
         <div className="space-y-4">
-          <p className="text-tinta-2 text-sm">A cada login, pediremos o código do app. Isso vale por sessão — não existe "lembrar este dispositivo".</p>
-          <Botao variante="secundario" icone={<ShieldOff className="size-4" />} onClick={() => definirDesativando(true)}>Desativar</Botao>
+          <p className="text-tinta-2 text-sm">
+            A cada login, pediremos o código do app. Isso vale por sessão — não existe "lembrar este
+            dispositivo".
+          </p>
+          <Botao
+            variante="secundario"
+            icone={<ShieldOff className="size-4" />}
+            onClick={() => definirDesativando(true)}
+          >
+            Desativar
+          </Botao>
         </div>
       ) : (
         <div className="space-y-4">
-          <p className="text-tinta-2 text-sm">Com ela, alguém que descubra sua senha ainda não consegue entrar nem enviar documentos em seu nome.</p>
-          <Botao icone={<KeyRound className="size-4" />} carregando={iniciar.isPending} onClick={() => iniciar.mutate()}>Configurar</Botao>
+          <p className="text-tinta-2 text-sm">
+            Com ela, alguém que descubra sua senha ainda não consegue entrar nem enviar documentos
+            em seu nome.
+          </p>
+          <Botao
+            icone={<KeyRound className="size-4" />}
+            carregando={iniciar.isPending}
+            onClick={() => iniciar.mutate()}
+          >
+            Configurar
+          </Botao>
         </div>
       )}
 
@@ -224,13 +332,27 @@ function Mfa() {
         largura="estreita"
         rodape={
           <>
-            <Botao variante="secundario" onClick={() => definirDesativando(false)}>Cancelar</Botao>
-            <Botao variante="perigo" disabled={!senha} carregando={desativar.isPending} onClick={() => desativar.mutate()}>Desativar</Botao>
+            <Botao variante="secundario" onClick={() => definirDesativando(false)}>
+              Cancelar
+            </Botao>
+            <Botao
+              variante="perigo"
+              disabled={!senha}
+              carregando={desativar.isPending}
+              onClick={() => desativar.mutate()}
+            >
+              Desativar
+            </Botao>
           </>
         }
       >
         <Campo rotulo="Senha">
-          <Entrada type="password" autoComplete="current-password" value={senha} onChange={(e) => definirSenha(e.target.value)} />
+          <Entrada
+            type="password"
+            autoComplete="current-password"
+            value={senha}
+            onChange={(e) => definirSenha(e.target.value)}
+          />
         </Campo>
       </Modal>
     </Cartao>
@@ -241,8 +363,26 @@ function descreverNavegador(userAgent: string | null): { rotulo: string; celular
   if (!userAgent) return { rotulo: 'Navegador desconhecido', celular: false };
 
   const celular = /Mobile|Android|iPhone/i.test(userAgent);
-  const navegador = /Edg\//.test(userAgent) ? 'Edge' : /Chrome\//.test(userAgent) ? 'Chrome' : /Firefox\//.test(userAgent) ? 'Firefox' : /Safari\//.test(userAgent) ? 'Safari' : 'Navegador';
-  const sistema = /Windows/.test(userAgent) ? 'Windows' : /Mac OS/.test(userAgent) ? 'macOS' : /Android/.test(userAgent) ? 'Android' : /iPhone|iPad/.test(userAgent) ? 'iOS' : /Linux/.test(userAgent) ? 'Linux' : '';
+  const navegador = /Edg\//.test(userAgent)
+    ? 'Edge'
+    : /Chrome\//.test(userAgent)
+      ? 'Chrome'
+      : /Firefox\//.test(userAgent)
+        ? 'Firefox'
+        : /Safari\//.test(userAgent)
+          ? 'Safari'
+          : 'Navegador';
+  const sistema = /Windows/.test(userAgent)
+    ? 'Windows'
+    : /Mac OS/.test(userAgent)
+      ? 'macOS'
+      : /Android/.test(userAgent)
+        ? 'Android'
+        : /iPhone|iPad/.test(userAgent)
+          ? 'iOS'
+          : /Linux/.test(userAgent)
+            ? 'Linux'
+            : '';
 
   return { rotulo: `${navegador}${sistema ? ` · ${sistema}` : ''}`, celular };
 }
@@ -261,16 +401,28 @@ function Sessoes() {
   });
 
   const encerrar = async (sessao: SessaoAtiva) => {
-    if (await confirmar({ titulo: 'Encerrar esta sessão?', mensagem: 'Quem estiver usando esse navegador precisará entrar de novo.', confirmar: 'Encerrar', perigosa: true })) {
+    if (
+      await confirmar({
+        titulo: 'Encerrar esta sessão?',
+        mensagem: 'Quem estiver usando esse navegador precisará entrar de novo.',
+        confirmar: 'Encerrar',
+        perigosa: true,
+      })
+    ) {
       revogar.mutate(sessao.uuid);
     }
   };
 
   return (
     <Cartao className="max-w-3xl">
-      <CabecalhoDoCartao titulo="Sessões ativas" descricao="Onde a sua conta está conectada agora. Encerre qualquer uma que você não reconheça." />
+      <CabecalhoDoCartao
+        titulo="Sessões ativas"
+        descricao="Onde a sua conta está conectada agora. Encerre qualquer uma que você não reconheça."
+      />
       {consulta.isPending && <Esqueleto className="h-32" />}
-      {consulta.isError && <EstadoDeErro erro={consulta.error} aoTentarDeNovo={() => void consulta.refetch()} />}
+      {consulta.isError && (
+        <EstadoDeErro erro={consulta.error} aoTentarDeNovo={() => void consulta.refetch()} />
+      )}
       <ul className="divide-linha divide-y">
         {consulta.data?.map((sessao) => {
           const { rotulo, celular } = descreverNavegador(sessao.userAgent);
@@ -278,7 +430,14 @@ function Sessoes() {
 
           return (
             <li key={sessao.uuid} className="flex items-center gap-4 py-4">
-              <span className={cn('flex size-10 items-center justify-center rounded-xl', sessao.atual ? 'bg-sucesso-suave text-sucesso-tinta' : 'bg-superficie-2 text-tinta-2')}>
+              <span
+                className={cn(
+                  'flex size-10 items-center justify-center rounded-xl',
+                  sessao.atual
+                    ? 'bg-sucesso-suave text-sucesso-tinta'
+                    : 'bg-superficie-2 text-tinta-2',
+                )}
+              >
                 <Icone className="size-5" aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
@@ -286,10 +445,15 @@ function Sessoes() {
                   {rotulo} {sessao.atual && <Etiqueta tom="sucesso">Esta sessão</Etiqueta>}
                 </p>
                 <p className="text-tinta-3 text-xs">
-                  IP {sessao.ip ?? '—'} · entrou {formatarRelativo(sessao.criadaEm)} · ativa {formatarRelativo(sessao.ultimaAtividadeEm)}
+                  IP {sessao.ip ?? '—'} · entrou {formatarRelativo(sessao.criadaEm)} · ativa{' '}
+                  {formatarRelativo(sessao.ultimaAtividadeEm)}
                 </p>
               </div>
-              {!sessao.atual && <Botao variante="secundario" tamanho="sm" onClick={() => void encerrar(sessao)}>Encerrar</Botao>}
+              {!sessao.atual && (
+                <Botao variante="secundario" tamanho="sm" onClick={() => void encerrar(sessao)}>
+                  Encerrar
+                </Botao>
+              )}
             </li>
           );
         })}
@@ -306,7 +470,8 @@ function Organizacao() {
   const [nome, definirNome] = useState<string | null>(null);
 
   const atualizar = useMutation({
-    mutationFn: (dados: { nome?: string; plano?: IdDoPlano }) => apiDaConta.atualizarOrganizacao(dados),
+    mutationFn: (dados: { nome?: string; plano?: IdDoPlano }) =>
+      apiDaConta.atualizarOrganizacao(dados),
     onSuccess: async (organizacao) => {
       clienteDeQuery.setQueryData(['organizacao'], organizacao);
       await Promise.all([recarregar(), clienteDeQuery.invalidateQueries({ queryKey: ['painel'] })]);
@@ -316,8 +481,14 @@ function Organizacao() {
     onError: (e) => toast.error(mensagemDoErro(e)),
   });
 
-  if (consulta.isPending) return <Esqueleto className="h-80 max-w-4xl rounded-[var(--radius-cartao)]" />;
-  if (consulta.isError) return <Cartao><EstadoDeErro erro={consulta.error} aoTentarDeNovo={() => void consulta.refetch()} /></Cartao>;
+  if (consulta.isPending)
+    return <Esqueleto className="h-80 max-w-4xl rounded-[var(--radius-cartao)]" />;
+  if (consulta.isError)
+    return (
+      <Cartao>
+        <EstadoDeErro erro={consulta.error} aoTentarDeNovo={() => void consulta.refetch()} />
+      </Cartao>
+    );
 
   const org = consulta.data;
   const nomeEmEdicao = nome ?? org.nome;
@@ -326,13 +497,32 @@ function Organizacao() {
     <div className="max-w-5xl space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
         <Cartao>
-          <CabecalhoDoCartao titulo="Dados da organização" descricao={`Criada em ${formatarData(org.criadoEm)}`} />
-          <Campo rotulo="Nome" dica={podeGerenciar ? 'Aparece nos convites e no manifesto de assinaturas.' : 'Só o proprietário altera.'}>
-            <Entrada value={nomeEmEdicao} disabled={!podeGerenciar} maxLength={120} onChange={(e) => definirNome(e.target.value)} />
+          <CabecalhoDoCartao
+            titulo="Dados da organização"
+            descricao={`Criada em ${formatarData(org.criadoEm)}`}
+          />
+          <Campo
+            rotulo="Nome"
+            dica={
+              podeGerenciar
+                ? 'Aparece nos convites e no manifesto de assinaturas.'
+                : 'Só o proprietário altera.'
+            }
+          >
+            <Entrada
+              value={nomeEmEdicao}
+              disabled={!podeGerenciar}
+              maxLength={120}
+              onChange={(e) => definirNome(e.target.value)}
+            />
           </Campo>
           {podeGerenciar && (
             <div className="mt-5 flex justify-end">
-              <Botao disabled={nomeEmEdicao.trim().length < 2 || nomeEmEdicao.trim() === org.nome} carregando={atualizar.isPending} onClick={() => atualizar.mutate({ nome: nomeEmEdicao.trim() })}>
+              <Botao
+                disabled={nomeEmEdicao.trim().length < 2 || nomeEmEdicao.trim() === org.nome}
+                carregando={atualizar.isPending}
+                onClick={() => atualizar.mutate({ nome: nomeEmEdicao.trim() })}
+              >
                 Salvar
               </Botao>
             </div>
@@ -342,20 +532,37 @@ function Organizacao() {
         <Cartao>
           <CabecalhoDoCartao titulo="Uso deste mês" />
           <div className="space-y-5">
-            <Uso rotulo="Documentos enviados" usado={org.uso.enviadosNoMes} limite={org.uso.limiteDeEnvios} />
-            <Uso rotulo="Pessoas na equipe" usado={org.uso.membros} limite={org.uso.limiteDeMembros} />
+            <Uso
+              rotulo="Documentos enviados"
+              usado={org.uso.enviadosNoMes}
+              limite={org.uso.limiteDeEnvios}
+            />
+            <Uso
+              rotulo="Pessoas na equipe"
+              usado={org.uso.membros}
+              limite={org.uso.limiteDeMembros}
+            />
           </div>
         </Cartao>
       </div>
 
       <Cartao>
-        <CabecalhoDoCartao titulo="Plano" descricao="Projeto acadêmico: a troca de plano é simulada, sem cobrança." />
+        <CabecalhoDoCartao
+          titulo="Plano"
+          descricao="Projeto acadêmico: a troca de plano é simulada, sem cobrança."
+        />
         <div className="grid gap-4 md:grid-cols-3">
           {PLANOS.map((plano) => {
             const atual = plano.id === org.plano;
 
             return (
-              <div key={plano.id} className={cn('flex flex-col rounded-2xl border-2 p-5', atual ? 'border-destaque bg-destaque-suave/50' : 'border-linha')}>
+              <div
+                key={plano.id}
+                className={cn(
+                  'flex flex-col rounded-2xl border-2 p-5',
+                  atual ? 'border-destaque bg-destaque-suave/50' : 'border-linha',
+                )}
+              >
                 <div className="flex items-center justify-between">
                   <p className="text-tinta font-bold">{plano.nome}</p>
                   {atual && <Etiqueta tom="info">Atual</Etiqueta>}
@@ -364,9 +571,19 @@ function Organizacao() {
                   {plano.preco}
                   <span className="text-tinta-3 text-sm font-medium">{plano.periodo}</span>
                 </p>
-                <p className="text-tinta-3 mt-1 flex-1 text-xs">{plano.enviosPorMes === null ? 'Envios ilimitados' : `${plano.enviosPorMes} envios por mês`}</p>
+                <p className="text-tinta-3 mt-1 flex-1 text-xs">
+                  {plano.enviosPorMes === null
+                    ? 'Envios ilimitados'
+                    : `${plano.enviosPorMes} envios por mês`}
+                </p>
                 {podeGerenciar && !atual && (
-                  <Botao variante="secundario" tamanho="sm" className="mt-4" carregando={atualizar.isPending} onClick={() => atualizar.mutate({ plano: plano.id })}>
+                  <Botao
+                    variante="secundario"
+                    tamanho="sm"
+                    className="mt-4"
+                    carregando={atualizar.isPending}
+                    onClick={() => atualizar.mutate({ plano: plano.id })}
+                  >
                     Mudar para {plano.nome}
                   </Botao>
                 )}
@@ -379,12 +596,22 @@ function Organizacao() {
   );
 }
 
-function Uso({ rotulo, usado, limite }: { readonly rotulo: string; readonly usado: number; readonly limite: number | null }) {
+function Uso({
+  rotulo,
+  usado,
+  limite,
+}: {
+  readonly rotulo: string;
+  readonly usado: number;
+  readonly limite: number | null;
+}) {
   return (
     <div>
       <div className="mb-2 flex justify-between text-sm">
         <span className="text-tinta-2">{rotulo}</span>
-        <span className="text-tinta font-semibold numeros">{limite === null ? `${usado} · ilimitado` : `${usado} de ${limite}`}</span>
+        <span className="text-tinta font-semibold numeros">
+          {limite === null ? `${usado} · ilimitado` : `${usado} de ${limite}`}
+        </span>
       </div>
       <BarraDeProgresso valor={limite === null ? 0.08 : usado / limite} rotulo={rotulo} />
     </div>

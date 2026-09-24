@@ -29,7 +29,7 @@ async function requisitar<T>(caminho: string, opcoes: Opcoes = {}): Promise<T> {
   const resposta = await fetch(`${BASE_URL}${caminho}`, {
     method: opcoes.metodo ?? 'GET',
     headers: temCorpo && !ehFormulario ? { 'Content-Type': 'application/json' } : undefined,
-    body: temCorpo ? (ehFormulario ? (opcoes.corpo as FormData) : JSON.stringify(opcoes.corpo)) : undefined,
+    body: temCorpo ? (ehFormulario ? opcoes.corpo : JSON.stringify(opcoes.corpo)) : undefined,
     signal: opcoes.sinal,
     credentials: 'include',
   });
@@ -54,7 +54,8 @@ export const http = {
   get: <T>(caminho: string, sinal?: AbortSignal) => requisitar<T>(caminho, { sinal }),
   post: <T>(caminho: string, corpo?: unknown) => requisitar<T>(caminho, { metodo: 'POST', corpo }),
   put: <T>(caminho: string, corpo?: unknown) => requisitar<T>(caminho, { metodo: 'PUT', corpo }),
-  patch: <T>(caminho: string, corpo?: unknown) => requisitar<T>(caminho, { metodo: 'PATCH', corpo }),
+  patch: <T>(caminho: string, corpo?: unknown) =>
+    requisitar<T>(caminho, { metodo: 'PATCH', corpo }),
   delete: <T>(caminho: string) => requisitar<T>(caminho, { metodo: 'DELETE' }),
 };
 

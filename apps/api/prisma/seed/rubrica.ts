@@ -23,7 +23,11 @@ function semente(texto: string): () => number {
 export function rubricaPng(nome: string): Buffer {
   const aleatorio = semente(nome);
   const alfa = new Float32Array(LARGURA * ALTURA);
-  const harmonicos = Array.from({ length: 4 }, (_, i) => ({ amp: 10 + aleatorio() * 16, freq: 0.03 + i * 0.022 + aleatorio() * 0.02, fase: aleatorio() * Math.PI * 2 }));
+  const harmonicos = Array.from({ length: 4 }, (_, i) => ({
+    amp: 10 + aleatorio() * 16,
+    freq: 0.03 + i * 0.022 + aleatorio() * 0.02,
+    fase: aleatorio() * Math.PI * 2,
+  }));
   const inclinacao = -0.08 + aleatorio() * 0.06;
 
   const pincel = (cx: number, cy: number, raio: number) => {
@@ -50,7 +54,8 @@ export function rubricaPng(nome: string): Buffer {
   }
 
   // Sublinhado curto, gesto comum em rubrica.
-  for (let t = 40; t < LARGURA * 0.62; t += 0.5) pincel(t, ALTURA - 20 + Math.sin(t * 0.05) * 2, 0.9);
+  for (let t = 40; t < LARGURA * 0.62; t += 0.5)
+    pincel(t, ALTURA - 20 + Math.sin(t * 0.05) * 2, 0.9);
 
   const linhas = Buffer.alloc((LARGURA * 4 + 1) * ALTURA);
 

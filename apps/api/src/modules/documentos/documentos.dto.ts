@@ -18,8 +18,10 @@ import {
 } from 'class-validator';
 import { NivelDeVerificacao, StatusDoDocumento } from '@prisma/client';
 
-const aparar = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
-const inteiro = ({ value }: { value: unknown }) => (value === undefined || value === '' ? undefined : Number(value));
+const aparar = ({ value }: { value: unknown }) =>
+  typeof value === 'string' ? value.trim() : value;
+const inteiro = ({ value }: { value: unknown }) =>
+  value === undefined || value === '' ? undefined : Number(value);
 
 export class CriarDocumentoDto {
   @Transform(aparar)
@@ -67,7 +69,9 @@ export class SignatarioDto {
   @Length(2, 120, { message: 'O nome do signatário deve ter entre 2 e 120 caracteres.' })
   nome!: string;
 
-  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
   @IsEmail({}, { message: 'Há um e-mail de signatário inválido.' })
   @MaxLength(180)
   email!: string;

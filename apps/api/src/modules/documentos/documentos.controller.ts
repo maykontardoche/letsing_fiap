@@ -140,7 +140,11 @@ export class DocumentosController {
     @Query('baixar') baixar: string | undefined,
     @Res() resposta: Response,
   ): Promise<void> {
-    const { conteudo, nome } = await this.servico.arquivo(usuario, uuid, versao === 'assinado' ? 'assinado' : 'original');
+    const { conteudo, nome } = await this.servico.arquivo(
+      usuario,
+      uuid,
+      versao === 'assinado' ? 'assinado' : 'original',
+    );
 
     enviarPdf(resposta, conteudo, nome, baixar === '1');
   }

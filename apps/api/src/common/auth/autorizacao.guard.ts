@@ -54,9 +54,16 @@ export class AutorizacaoGuard implements CanActivate {
       });
     }
 
-    const exigidas = this.reflector.getAllAndOverride<Permissao[] | undefined>(CHAVE_PERMISSOES, alvos);
+    const exigidas = this.reflector.getAllAndOverride<Permissao[] | undefined>(
+      CHAVE_PERMISSOES,
+      alvos,
+    );
 
-    if (exigidas !== undefined && exigidas.length > 0 && !exigidas.some((p) => pode(usuario.papel, p))) {
+    if (
+      exigidas !== undefined &&
+      exigidas.length > 0 &&
+      !exigidas.some((p) => pode(usuario.papel, p))
+    ) {
       throw new ForbiddenException(MENSAGEM_SEM_PERMISSAO);
     }
 

@@ -44,7 +44,11 @@ export function SessaoProvider({ children }: { readonly children: ReactNode }) {
   );
 }
 
-function interpretar(consulta: { isPending: boolean; data?: Perfil; error: unknown }): EstadoDaSessao {
+function interpretar(consulta: {
+  isPending: boolean;
+  data?: Perfil;
+  error: unknown;
+}): EstadoDaSessao {
   if (consulta.data !== undefined) return { situacao: 'autenticado', perfil: consulta.data };
 
   if (consulta.isPending) return { situacao: 'carregando' };

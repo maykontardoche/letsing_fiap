@@ -9,7 +9,15 @@ import { cn } from '@/lib/cn';
 const DIGITOS = 6;
 const ESPERA_PARA_REENVIAR = 30;
 
-export function VerificacaoCodigo({ api, emailMascarado, aoAprovar }: { readonly api: ApiDeAssinatura; readonly emailMascarado: string; readonly aoAprovar: () => void }) {
+export function VerificacaoCodigo({
+  api,
+  emailMascarado,
+  aoAprovar,
+}: {
+  readonly api: ApiDeAssinatura;
+  readonly emailMascarado: string;
+  readonly aoAprovar: () => void;
+}) {
   const [desafio, definirDesafio] = useState<string | null>(null);
   const [digitos, definirDigitos] = useState<string[]>(Array.from({ length: DIGITOS }, () => ''));
   const [erro, definirErro] = useState<string | null>(null);
@@ -85,7 +93,8 @@ export function VerificacaoCodigo({ api, emailMascarado, aoAprovar }: { readonly
   };
 
   const aoTeclar = (indice: number, evento: KeyboardEvent<HTMLInputElement>) => {
-    if (evento.key === 'Backspace' && digitos[indice] === '' && indice > 0) caixas.current[indice - 1]?.focus();
+    if (evento.key === 'Backspace' && digitos[indice] === '' && indice > 0)
+      caixas.current[indice - 1]?.focus();
     if (evento.key === 'ArrowLeft' && indice > 0) caixas.current[indice - 1]?.focus();
     if (evento.key === 'ArrowRight' && indice < DIGITOS - 1) caixas.current[indice + 1]?.focus();
   };
@@ -102,7 +111,8 @@ export function VerificacaoCodigo({ api, emailMascarado, aoAprovar }: { readonly
           <Mail className="size-10" aria-hidden="true" />
         </span>
         <p className="text-tinta-2 max-w-sm text-sm">
-          Vamos enviar um código de 6 dígitos para <strong className="text-tinta">{emailMascarado}</strong>. Ele prova que o e-mail é seu.
+          Vamos enviar um código de 6 dígitos para{' '}
+          <strong className="text-tinta">{emailMascarado}</strong>. Ele prova que o e-mail é seu.
         </p>
         {erro && <Alerta tom="perigo">{erro}</Alerta>}
         <Botao tamanho="lg" carregando={enviando} onClick={() => void pedirCodigo()}>
@@ -143,19 +153,40 @@ export function VerificacaoCodigo({ api, emailMascarado, aoAprovar }: { readonly
       </fieldset>
 
       <div className="min-h-6" aria-live="polite">
-        {conferindo && <p className="text-tinta-2 flex items-center gap-2 text-sm"><Loader2 className="size-4 animate-spin" /> Conferindo…</p>}
-        {aprovada && <p className="text-sucesso-tinta flex items-center gap-2 font-semibold"><CheckCircle2 className="size-5" /> E-mail confirmado</p>}
+        {conferindo && (
+          <p className="text-tinta-2 flex items-center gap-2 text-sm">
+            <Loader2 className="size-4 animate-spin" /> Conferindo…
+          </p>
+        )}
+        {aprovada && (
+          <p className="text-sucesso-tinta flex items-center gap-2 font-semibold">
+            <CheckCircle2 className="size-5" /> E-mail confirmado
+          </p>
+        )}
       </div>
 
-      {erro && <Alerta tom="perigo" className="w-full text-left">{erro}</Alerta>}
+      {erro && (
+        <Alerta tom="perigo" className="w-full text-left">
+          {erro}
+        </Alerta>
+      )}
 
       {!aprovada && (
-        <Botao variante="fantasma" tamanho="sm" icone={<RotateCw className="size-3.5" />} disabled={espera > 0 || enviando} onClick={() => void pedirCodigo()}>
+        <Botao
+          variante="fantasma"
+          tamanho="sm"
+          icone={<RotateCw className="size-3.5" />}
+          disabled={espera > 0 || enviando}
+          onClick={() => void pedirCodigo()}
+        >
           {espera > 0 ? `Reenviar em ${espera}s` : 'Reenviar código'}
         </Botao>
       )}
 
-      <p className="text-tinta-3 text-xs">Não chegou? Confira a caixa de spam. Em desenvolvimento, os e-mails ficam no Mailpit (localhost:8035).</p>
+      <p className="text-tinta-3 text-xs">
+        Não chegou? Confira a caixa de spam. Em desenvolvimento, os e-mails ficam no Mailpit
+        (localhost:8035).
+      </p>
     </div>
   );
 }

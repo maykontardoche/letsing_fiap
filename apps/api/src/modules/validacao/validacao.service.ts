@@ -21,7 +21,8 @@ const ACOES_PUBLICAS = new Set([
   'documento_concluido',
 ]);
 
-const NAO_ENCONTRADO = 'Nenhum documento com este código. Confira as letras e números impressos no rodapé do PDF.';
+const NAO_ENCONTRADO =
+  'Nenhum documento com este código. Confira as letras e números impressos no rodapé do PDF.';
 
 /**
  * A validação pública — o que qualquer pessoa, **sem conta**, pode conferir.
@@ -59,12 +60,16 @@ export class ValidacaoService {
         include: {
           organizacao: { select: { nome: true } },
           criadoPor: { select: { nome: true } },
-          signatarios: { orderBy: { ordem: 'asc' }, include: { desafios: { where: { aprovado: true } } } },
+          signatarios: {
+            orderBy: { ordem: 'asc' },
+            include: { desafios: { where: { aprovado: true } } },
+          },
         },
       }),
     );
 
-    if (documento === null || documento.status === 'rascunho') throw new NotFoundException(NAO_ENCONTRADO);
+    if (documento === null || documento.status === 'rascunho')
+      throw new NotFoundException(NAO_ENCONTRADO);
 
     const assinador = this.chave.assinador;
 
@@ -72,14 +77,18 @@ export class ValidacaoService {
       const cadeia = cadeiaDoDocumento(documento.uuid);
       const [integridade, eventos] = await Promise.all([
         this.auditoria.verificar(cadeia),
-        this.prisma.db.eventoDeAuditoria.findMany({ where: { cadeia }, orderBy: { sequencia: 'asc' } }),
+        this.prisma.db.eventoDeAuditoria.findMany({
+          where: { cadeia },
+          orderBy: { sequencia: 'asc' },
+        }),
       ]);
 
       const seloValido =
         documento.selo !== null &&
         documento.cargaDoSelo !== null &&
         assinador.verificar(documento.cargaDoSelo, documento.selo) &&
-        (JSON.parse(documento.cargaDoSelo) as { hashAssinado?: string }).hashAssinado === documento.hashAssinado;
+        (JSON.parse(documento.cargaDoSelo) as { hashAssinado?: string }).hashAssinado ===
+          documento.hashAssinado;
 
       return {
         documento: {
@@ -108,7 +117,8 @@ export class ValidacaoService {
             s.cargaAssinada !== null &&
             s.assinaturaDigital !== null &&
             assinador.verificar(s.cargaAssinada, s.assinaturaDigital) &&
-            (JSON.parse(s.cargaAssinada) as { documento?: { hashOriginal?: string } }).documento?.hashOriginal === documento.hashOriginal;
+            (JSON.parse(s.cargaAssinada) as { documento?: { hashOriginal?: string } }).documento
+              ?.hashOriginal === documento.hashOriginal;
 
           return {
             nome: s.nome,
@@ -119,13 +129,27 @@ export class ValidacaoService {
             assinadoEm: s.assinadoEm,
             recusadoEm: s.recusadoEm,
             tipoAssinatura: s.tipoAssinatura,
-            verificacoes: s.desafios.map((d) => ({ tipo: d.tipo, rotulo: ROTULO_DA_VERIFICACAO[d.tipo], pontuacao: d.pontuacao, em: d.concluidoEm })),
-            assinaturaDigital: s.assinaturaDigital === null ? null : { valida, id: sha256(s.assinaturaDigital).slice(0, 16) },
+            verificacoes: s.desafios.map((d) => ({
+              tipo: d.tipo,
+              rotulo: ROTULO_DA_VERIFICACAO[d.tipo],
+              pontuacao: d.pontuacao,
+              em: d.concluidoEm,
+            })),
+            assinaturaDigital:
+              s.assinaturaDigital === null
+                ? null
+                : { valida, id: sha256(s.assinaturaDigital).slice(0, 16) },
           };
         }),
         linhaDoTempo: eventos
           .filter((e) => ACOES_PUBLICAS.has(e.acao))
-          .map((e) => ({ acao: e.acao, resumo: e.resumo, em: e.criadoEm, tipoAtor: e.tipoAtor, hash: e.hash })),
+          .map((e) => ({
+            acao: e.acao,
+            resumo: e.resumo,
+            em: e.criadoEm,
+            tipoAtor: e.tipoAtor,
+            hash: e.hash,
+          })),
       };
     });
   }
@@ -141,7 +165,10 @@ export class ValidacaoService {
 
     const documento = await semEscopoDeOrganizacao(() =>
       this.prisma.db.documento.findFirst({
-        where: { OR: [{ hashAssinado: normalizado }, { hashOriginal: normalizado }], NOT: { status: 'rascunho' } },
+        where: {
+          OR: [{ hashAssinado: normalizado }, { hashOriginal: normalizado }],
+          NOT: { status: 'rascunho' },
+        },
         select: { codigo: true, hashAssinado: true },
       }),
     );
@@ -152,7 +179,10 @@ export class ValidacaoService {
       );
     }
 
-    return { codigo: documento.codigo, versao: documento.hashAssinado === normalizado ? 'assinado' : 'original' };
+    return {
+      codigo: documento.codigo,
+      versao: documento.hashAssinado === normalizado ? 'assinado' : 'original',
+    };
   }
 
   chavePublica() {

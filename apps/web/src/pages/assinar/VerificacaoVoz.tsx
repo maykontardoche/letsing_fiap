@@ -28,13 +28,20 @@ interface ReconhecedorDeFala {
 type Construtor = new () => ReconhecedorDeFala;
 
 function construtorDaFala(): Construtor | null {
-  const janela = window as unknown as { SpeechRecognition?: Construtor; webkitSpeechRecognition?: Construtor };
+  const janela = window as unknown as {
+    SpeechRecognition?: Construtor;
+    webkitSpeechRecognition?: Construtor;
+  };
 
   return janela.SpeechRecognition ?? janela.webkitSpeechRecognition ?? null;
 }
 
 const normalizar = (texto: string) =>
-  texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+  texto
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ');
 
 const junto = (texto: string) => normalizar(texto).replace(/\s/g, '');
 
@@ -43,13 +50,20 @@ function todasDitas(texto: string, palavras: readonly string[]): boolean {
 }
 
 const ERROS_DE_FALA: Record<string, string> = {
-  'not-allowed': 'O acesso ao microfone foi negado. Permita o microfone na barra de endereço e tente de novo.',
+  'not-allowed':
+    'O acesso ao microfone foi negado. Permita o microfone na barra de endereço e tente de novo.',
   'no-speech': 'Não ouvimos nada. Fale perto do microfone e tente de novo.',
   'audio-capture': 'Nenhum microfone encontrado.',
   network: 'O reconhecimento de voz precisa de internet. Verifique a conexão.',
 };
 
-export function VerificacaoVoz({ api, aoAprovar }: { readonly api: ApiDeAssinatura; readonly aoAprovar: () => void }) {
+export function VerificacaoVoz({
+  api,
+  aoAprovar,
+}: {
+  readonly api: ApiDeAssinatura;
+  readonly aoAprovar: () => void;
+}) {
   const Reconhecedor = construtorDaFala();
   const [desafio, definirDesafio] = useState<{ id: string; palavras: string[] } | null>(null);
   const [ouvindo, definirOuvindo] = useState(false);
@@ -65,7 +79,8 @@ export function VerificacaoVoz({ api, aoAprovar }: { readonly api: ApiDeAssinatu
   if (Reconhecedor === null) {
     return (
       <Alerta tom="alerta" titulo="Seu navegador não reconhece voz">
-        O desafio de voz usa o reconhecimento de fala do navegador, disponível no Google Chrome e no Microsoft Edge. Abra este mesmo link num deles para continuar.
+        O desafio de voz usa o reconhecimento de fala do navegador, disponível no Google Chrome e no
+        Microsoft Edge. Abra este mesmo link num deles para continuar.
       </Alerta>
     );
   }
@@ -126,7 +141,10 @@ export function VerificacaoVoz({ api, aoAprovar }: { readonly api: ApiDeAssinatu
       if (desafio && todasDitas(definitivo, desafio.palavras)) novo.stop();
     };
     novo.onerror = (evento) => {
-      if (evento.error !== 'aborted') definirErro(ERROS_DE_FALA[evento.error] ?? 'O reconhecimento de voz falhou. Tente de novo.');
+      if (evento.error !== 'aborted')
+        definirErro(
+          ERROS_DE_FALA[evento.error] ?? 'O reconhecimento de voz falhou. Tente de novo.',
+        );
     };
     novo.onend = () => {
       definirOuvindo(false);
@@ -146,13 +164,20 @@ export function VerificacaoVoz({ api, aoAprovar }: { readonly api: ApiDeAssinatu
           <span className="bg-gradiente-marca flex size-20 items-center justify-center rounded-3xl text-white shadow-brilho">
             <Mic className="size-10" aria-hidden="true" />
           </span>
-          <p className="text-tinta-2 max-w-sm text-sm">Vamos sortear três palavras. Fale todas em voz alta — em qualquer ordem — quando o microfone ligar.</p>
-          <Botao tamanho="lg" onClick={() => void obterDesafio()}>Sortear palavras</Botao>
+          <p className="text-tinta-2 max-w-sm text-sm">
+            Vamos sortear três palavras. Fale todas em voz alta — em qualquer ordem — quando o
+            microfone ligar.
+          </p>
+          <Botao tamanho="lg" onClick={() => void obterDesafio()}>
+            Sortear palavras
+          </Botao>
         </div>
       ) : (
         <>
           <div>
-            <p className="text-tinta-3 mb-3 text-center text-xs font-semibold tracking-wide uppercase">Fale estas palavras</p>
+            <p className="text-tinta-3 mb-3 text-center text-xs font-semibold tracking-wide uppercase">
+              Fale estas palavras
+            </p>
             <ul className="flex flex-wrap justify-center gap-3">
               {desafio.palavras.map((palavra) => {
                 const dita = todasDitas(transcricao, [palavra]);
@@ -162,10 +187,17 @@ export function VerificacaoVoz({ api, aoAprovar }: { readonly api: ApiDeAssinatu
                     key={palavra}
                     className={cn(
                       'font-display rounded-2xl border-2 px-5 py-3 text-xl font-bold transition-all duration-300',
-                      dita ? 'border-sucesso bg-sucesso-suave text-sucesso-tinta scale-105' : 'border-linha bg-superficie text-tinta',
+                      dita
+                        ? 'border-sucesso bg-sucesso-suave text-sucesso-tinta scale-105'
+                        : 'border-linha bg-superficie text-tinta',
                     )}
                   >
-                    {dita && <CheckCircle2 className="mr-1.5 inline size-5 align-[-3px]" aria-hidden="true" />}
+                    {dita && (
+                      <CheckCircle2
+                        className="mr-1.5 inline size-5 align-[-3px]"
+                        aria-hidden="true"
+                      />
+                    )}
                     {palavra}
                   </li>
                 );
@@ -173,18 +205,30 @@ export function VerificacaoVoz({ api, aoAprovar }: { readonly api: ApiDeAssinatu
             </ul>
           </div>
 
-          <div className="border-linha bg-superficie-2/60 flex min-h-20 items-center justify-center rounded-2xl border p-4 text-center" aria-live="polite">
+          <div
+            className="border-linha bg-superficie-2/60 flex min-h-20 items-center justify-center rounded-2xl border p-4 text-center"
+            aria-live="polite"
+          >
             {ouvindo ? (
               <div className="flex flex-col items-center gap-3">
                 <div className="flex h-8 items-end gap-1" aria-hidden="true">
                   {Array.from({ length: 7 }, (_, i) => (
-                    <span key={i} className="bg-destaque w-1.5 rounded-full" style={{ height: '100%', animation: `pulso-suave ${0.6 + (i % 3) * 0.2}s ease-in-out ${i * 0.08}s infinite` }} />
+                    <span
+                      key={i}
+                      className="bg-destaque w-1.5 rounded-full"
+                      style={{
+                        height: '100%',
+                        animation: `pulso-suave ${0.6 + (i % 3) * 0.2}s ease-in-out ${i * 0.08}s infinite`,
+                      }}
+                    />
                   ))}
                 </div>
                 <p className="text-tinta text-sm">{transcricao || 'Ouvindo… pode falar.'}</p>
               </div>
             ) : (
-              <p className="text-tinta-3 text-sm">{transcricao ? `Você disse: “${transcricao}”` : 'O que você falar aparece aqui.'}</p>
+              <p className="text-tinta-3 text-sm">
+                {transcricao ? `Você disse: “${transcricao}”` : 'O que você falar aparece aqui.'}
+              </p>
             )}
           </div>
 
@@ -192,11 +236,19 @@ export function VerificacaoVoz({ api, aoAprovar }: { readonly api: ApiDeAssinatu
 
           <div className="flex flex-wrap justify-center gap-2">
             {aprovada ? (
-              <p className="text-sucesso-tinta flex items-center gap-2 font-semibold"><CheckCircle2 className="size-5" /> Voz confirmada</p>
+              <p className="text-sucesso-tinta flex items-center gap-2 font-semibold">
+                <CheckCircle2 className="size-5" /> Voz confirmada
+              </p>
             ) : enviando ? (
-              <p className="text-tinta-2 flex items-center gap-2 text-sm"><Loader2 className="size-4 animate-spin" /> Conferindo…</p>
+              <p className="text-tinta-2 flex items-center gap-2 text-sm">
+                <Loader2 className="size-4 animate-spin" /> Conferindo…
+              </p>
             ) : ouvindo ? (
-              <Botao variante="secundario" icone={<MicOff className="size-4" />} onClick={() => reconhecedor.current?.stop()}>
+              <Botao
+                variante="secundario"
+                icone={<MicOff className="size-4" />}
+                onClick={() => reconhecedor.current?.stop()}
+              >
                 Terminei de falar
               </Botao>
             ) : (
@@ -204,7 +256,11 @@ export function VerificacaoVoz({ api, aoAprovar }: { readonly api: ApiDeAssinatu
                 <Botao tamanho="lg" icone={<Mic className="size-4" />} onClick={ouvir}>
                   {transcricao ? 'Falar de novo' : 'Ligar o microfone'}
                 </Botao>
-                <Botao variante="fantasma" icone={<RefreshCw className="size-4" />} onClick={() => void obterDesafio()}>
+                <Botao
+                  variante="fantasma"
+                  icone={<RefreshCw className="size-4" />}
+                  onClick={() => void obterDesafio()}
+                >
                   Outras palavras
                 </Botao>
               </>

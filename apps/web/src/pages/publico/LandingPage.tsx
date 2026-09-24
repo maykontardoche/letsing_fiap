@@ -1,6 +1,12 @@
 import { NavegacaoPublica } from '@/components/layout/NavegacaoPublica';
 import { Hero } from './landing/Hero';
-import { Biometria, ComoFunciona, FaixaDeNormas, Seguranca, ValidacaoPublica } from './landing/Secoes';
+import {
+  Biometria,
+  ComoFunciona,
+  FaixaDeNormas,
+  Seguranca,
+  ValidacaoPublica,
+} from './landing/Secoes';
 import { Planos } from './landing/Planos';
 import { ChamadaFinal, Perguntas, Rodape } from './landing/Final';
 

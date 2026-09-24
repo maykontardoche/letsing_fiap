@@ -38,9 +38,10 @@ export function decifrar(cifrado: string, chave: Buffer): string {
 
   decifrador.setAuthTag(Buffer.from(tagHex, 'hex'));
 
-  return Buffer.concat([decifrador.update(Buffer.from(dadosHex, 'hex')), decifrador.final()]).toString(
-    'utf8',
-  );
+  return Buffer.concat([
+    decifrador.update(Buffer.from(dadosHex, 'hex')),
+    decifrador.final(),
+  ]).toString('utf8');
 }
 
 /**

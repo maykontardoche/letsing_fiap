@@ -21,7 +21,10 @@ const PADRAO: Filtros = { q: '', status: null, ordenar: 'criadoEm', dir: 'desc',
  * tela. E **mudar qualquer filtro volta para a página 1** — sem isso, filtrar
  * estando na página 7 mostraria uma tela vazia, lida como "não há nada".
  */
-export function useFiltrosNaUrl(opcoes: { readonly statusValidos: readonly string[]; readonly ordenacoesValidas: readonly string[] }) {
+export function useFiltrosNaUrl(opcoes: {
+  readonly statusValidos: readonly string[];
+  readonly ordenacoesValidas: readonly string[];
+}) {
   const [parametros, definirParametros] = useSearchParams();
 
   const filtros = useMemo<Filtros>(() => {
@@ -32,7 +35,8 @@ export function useFiltrosNaUrl(opcoes: { readonly statusValidos: readonly strin
     return {
       q: (parametros.get('q') ?? '').slice(0, 100),
       status: status !== null && opcoes.statusValidos.includes(status) ? status : null,
-      ordenar: ordenar !== null && opcoes.ordenacoesValidas.includes(ordenar) ? ordenar : PADRAO.ordenar,
+      ordenar:
+        ordenar !== null && opcoes.ordenacoesValidas.includes(ordenar) ? ordenar : PADRAO.ordenar,
       dir: parametros.get('dir') === 'asc' ? 'asc' : 'desc',
       pagina: Number.isInteger(pagina) && pagina >= 1 && pagina <= 10_000 ? pagina : 1,
     };
@@ -40,7 +44,11 @@ export function useFiltrosNaUrl(opcoes: { readonly statusValidos: readonly strin
 
   const mudar = useCallback(
     (mudanca: Partial<Filtros>) => {
-      const proximo = { ...filtros, ...mudanca, ...(mudanca.pagina === undefined ? { pagina: 1 } : {}) };
+      const proximo = {
+        ...filtros,
+        ...mudanca,
+        ...(mudanca.pagina === undefined ? { pagina: 1 } : {}),
+      };
       const busca = new URLSearchParams();
 
       if (proximo.q) busca.set('q', proximo.q);

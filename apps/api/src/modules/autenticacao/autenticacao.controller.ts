@@ -92,7 +92,10 @@ export class AutenticacaoController {
   @Publico()
   @Post('redefinir-senha')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async redefinirSenha(@Body() dto: RedefinirSenhaDto, @OrigemDaRequisicao() origem: Origem): Promise<void> {
+  async redefinirSenha(
+    @Body() dto: RedefinirSenhaDto,
+    @OrigemDaRequisicao() origem: Origem,
+  ): Promise<void> {
     await this.servico.redefinirSenha(dto.token, dto.senha, origem);
   }
 }

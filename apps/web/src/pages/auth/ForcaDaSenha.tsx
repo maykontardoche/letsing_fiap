@@ -39,7 +39,13 @@ export function ForcaDaSenha({ senha }: { readonly senha: string }) {
       <div className="flex items-center gap-3">
         <div className="flex flex-1 gap-1">
           {Array.from({ length: 5 }, (_, i) => (
-            <span key={i} className={cn('h-1.5 flex-1 rounded-full transition-colors', i < atendidos ? nivel.cor : 'bg-superficie-3')} />
+            <span
+              key={i}
+              className={cn(
+                'h-1.5 flex-1 rounded-full transition-colors',
+                i < atendidos ? nivel.cor : 'bg-superficie-3',
+              )}
+            />
           ))}
         </div>
         <span className="text-tinta-2 w-20 text-right text-xs font-medium">{nivel.rotulo}</span>
@@ -49,8 +55,18 @@ export function ForcaDaSenha({ senha }: { readonly senha: string }) {
           const ok = r.teste(senha);
 
           return (
-            <li key={r.rotulo} className={cn('flex items-center gap-1.5', ok ? 'text-sucesso-tinta' : 'text-tinta-3')}>
-              {ok ? <Check className="size-3.5" aria-hidden="true" /> : <X className="size-3.5" aria-hidden="true" />}
+            <li
+              key={r.rotulo}
+              className={cn(
+                'flex items-center gap-1.5',
+                ok ? 'text-sucesso-tinta' : 'text-tinta-3',
+              )}
+            >
+              {ok ? (
+                <Check className="size-3.5" aria-hidden="true" />
+              ) : (
+                <X className="size-3.5" aria-hidden="true" />
+              )}
               <span>
                 {r.rotulo}
                 <span className="sr-only">{ok ? ' — atendido' : ' — pendente'}</span>

@@ -31,10 +31,38 @@ export const TENTATIVAS_POR_DESAFIO = 5;
 
 /** Palavras curtas, sem homófonos comuns e fáceis de transcrever em pt-BR. */
 export const PALAVRAS = [
-  'girassol', 'cometa', 'aurora', 'montanha', 'oceano', 'floresta', 'janela', 'relógio',
-  'biscoito', 'tucano', 'abacaxi', 'violino', 'planeta', 'caderno', 'bicicleta', 'castelo',
-  'margarida', 'pipoca', 'trovão', 'arco-íris', 'baleia', 'coruja', 'farol', 'jardim',
-  'limonada', 'museu', 'navio', 'orquídea', 'pinguim', 'safira', 'tapete', 'vulcão',
+  'girassol',
+  'cometa',
+  'aurora',
+  'montanha',
+  'oceano',
+  'floresta',
+  'janela',
+  'relógio',
+  'biscoito',
+  'tucano',
+  'abacaxi',
+  'violino',
+  'planeta',
+  'caderno',
+  'bicicleta',
+  'castelo',
+  'margarida',
+  'pipoca',
+  'trovão',
+  'arco-íris',
+  'baleia',
+  'coruja',
+  'farol',
+  'jardim',
+  'limonada',
+  'museu',
+  'navio',
+  'orquídea',
+  'pinguim',
+  'safira',
+  'tapete',
+  'vulcão',
 ] as const;
 
 export const GESTOS = ['Open_Palm', 'Closed_Fist', 'Pointing_Up', 'Thumb_Up', 'Victory'] as const;
@@ -50,7 +78,7 @@ export function sortear<T>(itens: readonly T[], quantidade: number): T[] {
   for (let i = copia.length - 1; i > 0; i -= 1) {
     const j = randomInt(i + 1);
 
-    [copia[i], copia[j]] = [copia[j] as T, copia[i] as T];
+    [copia[i], copia[j]] = [copia[j], copia[i]];
   }
 
   return copia.slice(0, quantidade);
@@ -94,14 +122,26 @@ export function avaliarGestos(
   reconhecida: readonly string[],
   confiancas: readonly number[],
 ): ResultadoDoDesafio {
-  const media = confiancas.length === 0 ? 0 : confiancas.reduce((soma, c) => soma + c, 0) / confiancas.length;
-  const confere = esperada.length === reconhecida.length && esperada.every((gesto, i) => reconhecida[i] === gesto);
+  const media =
+    confiancas.length === 0 ? 0 : confiancas.reduce((soma, c) => soma + c, 0) / confiancas.length;
+  const confere =
+    esperada.length === reconhecida.length &&
+    esperada.every((gesto, i) => reconhecida[i] === gesto);
 
-  if (!confere) return { aprovado: false, pontuacao: 0, motivo: 'A sequência de gestos não confere com a pedida.' };
+  if (!confere)
+    return {
+      aprovado: false,
+      pontuacao: 0,
+      motivo: 'A sequência de gestos não confere com a pedida.',
+    };
 
   return media >= 0.6
     ? { aprovado: true, pontuacao: arredondar(media) }
-    : { aprovado: false, pontuacao: arredondar(media), motivo: 'Os gestos não ficaram nítidos. Aproxime a mão e procure mais luz.' };
+    : {
+        aprovado: false,
+        pontuacao: arredondar(media),
+        motivo: 'Os gestos não ficaram nítidos. Aproxime a mão e procure mais luz.',
+      };
 }
 
 /**
@@ -110,21 +150,47 @@ export function avaliarGestos(
  */
 export function avaliarFacial(
   acoesPedidas: readonly string[],
-  medicao: { acoes: readonly string[]; quadrosAnalisados: number; quadrosComRosto: number; confiancaMedia: number; rostosMultiplos: boolean },
+  medicao: {
+    acoes: readonly string[];
+    quadrosAnalisados: number;
+    quadrosComRosto: number;
+    confiancaMedia: number;
+    rostosMultiplos: boolean;
+  },
 ): ResultadoDoDesafio {
   if (medicao.rostosMultiplos) {
-    return { aprovado: false, pontuacao: 0, motivo: 'Detectamos mais de um rosto. Faça a verificação sozinho diante da câmera.' };
+    return {
+      aprovado: false,
+      pontuacao: 0,
+      motivo: 'Detectamos mais de um rosto. Faça a verificação sozinho diante da câmera.',
+    };
   }
 
-  const presenca = medicao.quadrosAnalisados === 0 ? 0 : medicao.quadrosComRosto / medicao.quadrosAnalisados;
+  const presenca =
+    medicao.quadrosAnalisados === 0 ? 0 : medicao.quadrosComRosto / medicao.quadrosAnalisados;
   const acoesConferem =
-    acoesPedidas.length === medicao.acoes.length && acoesPedidas.every((acao, i) => medicao.acoes[i] === acao);
+    acoesPedidas.length === medicao.acoes.length &&
+    acoesPedidas.every((acao, i) => medicao.acoes[i] === acao);
   const pontuacao = arredondar(presenca * 0.5 + medicao.confiancaMedia * 0.5);
 
-  if (medicao.quadrosAnalisados < 10) return { aprovado: false, pontuacao, motivo: 'A verificação foi rápida demais. Tente de novo.' };
-  if (!acoesConferem) return { aprovado: false, pontuacao, motivo: 'As ações de prova de vida não foram concluídas na ordem pedida.' };
+  if (medicao.quadrosAnalisados < 10)
+    return {
+      aprovado: false,
+      pontuacao,
+      motivo: 'A verificação foi rápida demais. Tente de novo.',
+    };
+  if (!acoesConferem)
+    return {
+      aprovado: false,
+      pontuacao,
+      motivo: 'As ações de prova de vida não foram concluídas na ordem pedida.',
+    };
   if (presenca < 0.6 || medicao.confiancaMedia < 0.5) {
-    return { aprovado: false, pontuacao, motivo: 'Seu rosto não ficou visível o suficiente. Procure um lugar mais iluminado.' };
+    return {
+      aprovado: false,
+      pontuacao,
+      motivo: 'Seu rosto não ficou visível o suficiente. Procure um lugar mais iluminado.',
+    };
   }
 
   return { aprovado: true, pontuacao };
