@@ -11,7 +11,7 @@ import { Alerta } from '@/components/ui/Estados';
 import { apiDeSessao } from '@/lib/api/sessao';
 import { mensagemDoErro } from '@/lib/erros';
 import { ForcaDaSenha, senhaAtendeRequisitos } from './ForcaDaSenha';
-import { destinoSeguro } from './EntrarPage';
+import { destinoSeguro } from '@/lib/navegacao';
 import { MolduraDeAutenticacao } from './MolduraDeAutenticacao';
 
 export function EsqueciSenhaPage() {

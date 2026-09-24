@@ -10,6 +10,7 @@ import { Campo, Entrada } from '@/components/ui/Campo';
 import { Alerta } from '@/components/ui/Estados';
 import { apiDeSessao } from '@/lib/api/sessao';
 import { mensagemDoErro } from '@/lib/erros';
+import { destinoSeguro } from '@/lib/navegacao';
 import { MolduraDeAutenticacao } from './MolduraDeAutenticacao';
 
 const esquema = z.object({
@@ -18,11 +19,6 @@ const esquema = z.object({
 });
 
 type Dados = z.infer<typeof esquema>;
-
-/** Só caminhos internos: `?voltar=https://site-malicioso` não pode virar open redirect. */
-export function destinoSeguro(bruto: string | null): string {
-  return bruto !== null && bruto.startsWith('/') && !bruto.startsWith('//') ? bruto : '/app';
-}
 
 export function EntrarPage() {
   const { estado, recarregar } = useSessao();
